@@ -1,0 +1,36 @@
+
+name: Auto Blog Generator
+
+on:
+  schedule:
+    # Run every 3 minutes
+    - cron: '*/3 * * * *'
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  generate-blog:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        
+    - name: Install dependencies
+      run: |
+        cd automation
+        npm install
+        
+    - name: Generate and send blog post
+      env:
+        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        MAILFENCE_EMAIL: ${{ secrets.MAILFENCE_EMAIL }}
+        MAILFENCE_PASSWORD: ${{ secrets.MAILFENCE_PASSWORD }}
+        RECIPIENT_EMAIL: ${{ secrets.RECIPIENT_EMAIL }}
+      run: |
+        cd automation
+        node generate-blog.js

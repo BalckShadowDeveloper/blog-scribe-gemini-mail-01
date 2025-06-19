@@ -22,6 +22,8 @@ const Index = () => {
   const [selectedHeadline, setSelectedHeadline] = useState('');
   const [blogPost, setBlogPost] = useState('');
   const [imageUrl, setImageUrl] = useState('');
+  const [automationStatus, setAutomationStatus] = useState('');
+  const [isTestingAutomation, setIsTestingAutomation] = useState(false);
 
   const getTrendingTopics = async () => {
     if (!geminiApiKey) {
@@ -153,6 +155,43 @@ const Index = () => {
     }
   };
 
+  const testAutomation = async () => {
+    if (!geminiApiKey) {
+      toast.error('Please enter your Gemini API key first');
+      return;
+    }
+
+    setIsTestingAutomation(true);
+    setAutomationStatus('Testing automation workflow...');
+    
+    try {
+      // Simulate the full automation process
+      setAutomationStatus('Generating trending topics...');
+      await getTrendingTopics();
+      
+      // Auto-select first topic and generate headlines
+      if (trendingTopics.length > 0) {
+        setAutomationStatus('Generating headlines...');
+        await generateHeadlines(trendingTopics[0]);
+        
+        // Auto-select first headline and generate blog post
+        if (headlines.length > 0) {
+          setAutomationStatus('Generating blog post...');
+          await generateBlogPost(headlines[0]);
+          
+          setAutomationStatus('Blog post generated successfully! This simulates the GitHub Actions workflow.');
+          toast.success('Automation test completed successfully!');
+        }
+      }
+    } catch (error) {
+      console.error('Automation test failed:', error);
+      setAutomationStatus('Automation test failed. Check console for details.');
+      toast.error('Automation test failed');
+    } finally {
+      setIsTestingAutomation(false);
+    }
+  };
+
   const sendEmail = async () => {
     if (!emailConfig.recipientEmail || !emailConfig.senderEmail || !emailConfig.senderPassword) {
       toast.error('Please fill in all email configuration fields');
@@ -196,6 +235,47 @@ const Index = () => {
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
             Generate trending blog posts with Gemini AI and send them via email
           </p>
+          <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+            <p className="text-sm text-blue-800">
+              <strong>GitHub Actions:</strong> Automated blog generation runs every 3 minutes. 
+              Check your repository's Actions tab to monitor the workflow.
+            </p>
+          </div>
+        </div>
+
+        {/* Automation Test Section */}
+        <div className="max-w-2xl mx-auto mb-8">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Sparkles className="h-6 w-6 text-orange-500" />
+                Test Automation Workflow
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-sm text-gray-600">
+                Test the complete automation process that runs in GitHub Actions. 
+                This will generate a topic, headline, and blog post automatically.
+              </p>
+              <Button 
+                onClick={testAutomation}
+                disabled={isTestingAutomation || !geminiApiKey}
+                className="w-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600"
+              >
+                {isTestingAutomation ? (
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                ) : (
+                  <Sparkles className="h-4 w-4 mr-2" />
+                )}
+                Test Full Automation
+              </Button>
+              {automationStatus && (
+                <div className="p-3 bg-gray-50 rounded-lg">
+                  <p className="text-sm text-gray-700">{automationStatus}</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </div>
 
         {/* Progress Steps */}
@@ -245,16 +325,26 @@ const Index = () => {
                   onChange={(e) => setEmailConfig({...emailConfig, recipientEmail: e.target.value})}
                 />
                 <Input
-                  placeholder="Your email"
+                  placeholder="Your Mailfence email"
                   value={emailConfig.senderEmail}
                   onChange={(e) => setEmailConfig({...emailConfig, senderEmail: e.target.value})}
                 />
                 <Input
                   type="password"
-                  placeholder="Your email password"
+                  placeholder="Your Mailfence password"
                   value={emailConfig.senderPassword}
                   onChange={(e) => setEmailConfig({...emailConfig, senderPassword: e.target.value})}
                 />
+                <p className="text-xs text-gray-500">
+                  Using Mailfence SMTP: smtp.mailfence.com:465 (SSL/TLS)
+                </p>
+              </div>
+
+              <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <p className="text-sm text-yellow-800">
+                  <strong>GitHub Actions Setup:</strong> Add your credentials as repository secrets 
+                  (GEMINI_API_KEY, MAILFENCE_EMAIL, MAILFENCE_PASSWORD, RECIPIENT_EMAIL) for automated blog generation.
+                </p>
               </div>
               
               <Button 
