@@ -3,8 +3,8 @@ name: Auto Blog Generator
 
 on:
   schedule:
-    # Run every 3 minutes
-    - cron: '*/3 * * * *'
+    # Run every 2 minutes for more aggressive automation
+    - cron: '*/2 * * * *'
   workflow_dispatch: # Allow manual trigger
 
 jobs:
@@ -19,18 +19,21 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: automation/package.json
         
     - name: Install dependencies
-      run: |
-        cd automation
-        npm install
+      working-directory: ./automation
+      run: npm install
         
     - name: Generate and send blog post
+      working-directory: ./automation
       env:
         GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         MAILFENCE_EMAIL: ${{ secrets.MAILFENCE_EMAIL }}
         MAILFENCE_PASSWORD: ${{ secrets.MAILFENCE_PASSWORD }}
         RECIPIENT_EMAIL: ${{ secrets.RECIPIENT_EMAIL }}
-      run: |
-        cd automation
-        node generate-blog.js
+      run: node generate-blog.js
+
+    - name: Log completion
+      run: echo "Blog generation completed at $(date)"

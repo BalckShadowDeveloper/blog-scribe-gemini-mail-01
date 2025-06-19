@@ -1,0 +1,14 @@
+
+{
+  "name": "ai-blog-automation",
+  "version": "1.0.0",
+  "description": "Automated blog generation and email sending",
+  "main": "generate-blog.js",
+  "scripts": {
+    "start": "node generate-blog.js"
+  },
+  "dependencies": {
+    "nodemailer": "^6.9.8",
+    "axios": "^1.6.2"
+  }
+}
