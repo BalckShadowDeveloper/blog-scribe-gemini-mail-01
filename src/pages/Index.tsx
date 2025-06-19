@@ -5,13 +5,17 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, Sparkles, Mail, Image, FileText, TrendingUp, Play, Square } from 'lucide-react';
 import { toast } from 'sonner';
+import emailjs from '@emailjs/browser';
 
 const Index = () => {
   const [geminiApiKey, setGeminiApiKey] = useState('');
   const [emailConfig, setEmailConfig] = useState({
     recipientEmail: '',
     senderEmail: '',
-    senderPassword: ''
+    senderPassword: '',
+    emailjsServiceId: '',
+    emailjsTemplateId: '',
+    emailjsPublicKey: ''
   });
   const [isAutomated, setIsAutomated] = useState(false);
   const [automationInterval, setAutomationInterval] = useState<NodeJS.Timeout | null>(null);
@@ -97,64 +101,53 @@ const Index = () => {
     return blogContent;
   };
 
-  const sendEmailViaAPI = async (subject: string, content: string, imageUrl: string) => {
-    addLog('Attempting to send email...');
+  const sendEmailViaEmailJS = async (subject: string, content: string, imageUrl: string) => {
+    addLog('Sending email via EmailJS...');
     
-    // Create HTML email content
-    const htmlContent = `
-      <div style="font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px;">
-        <div style="text-align: center; margin-bottom: 30px;">
-          <h1 style="color: #6366f1; margin-bottom: 10px;">AI Blog Scribe</h1>
-          <p style="color: #666; font-size: 14px;">Automated Blog Generation</p>
-        </div>
-        
-        <div style="background: #f8fafc; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-          <img src="${imageUrl}" alt="Blog post image" style="width: 100%; height: 200px; object-fit: cover; border-radius: 8px;">
-        </div>
-        
-        <div style="line-height: 1.6; color: #333;">
-          ${content.replace(/\n/g, '<br>')}
-        </div>
-        
-        <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb; text-align: center; color: #666; font-size: 12px;">
-          <p>Generated automatically by AI Blog Scribe</p>
-          <p>Powered by Google Gemini AI</p>
-          <p>Generated at: ${new Date().toLocaleString()}</p>
-        </div>
-      </div>
-    `;
+    if (!emailConfig.emailjsServiceId || !emailConfig.emailjsTemplateId || !emailConfig.emailjsPublicKey) {
+      throw new Error('EmailJS configuration is incomplete');
+    }
 
     try {
-      // Try to use a free email service API (EmailJS alternative)
-      // For demonstration, we'll simulate the email sending
-      const emailPayload = {
-        to: emailConfig.recipientEmail,
-        from: emailConfig.senderEmail,
+      // Initialize EmailJS with your public key
+      emailjs.init(emailConfig.emailjsPublicKey);
+
+      // Prepare email template parameters
+      const templateParams = {
+        to_email: emailConfig.recipientEmail,
+        from_email: emailConfig.senderEmail,
         subject: subject,
-        html: htmlContent,
-        timestamp: new Date().toISOString()
+        blog_content: content,
+        image_url: imageUrl,
+        generated_at: new Date().toLocaleString(),
+        topic: currentBlog.topic
       };
 
-      // Simulate email sending delay
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Log the email details for debugging
-      console.log('Email would be sent with payload:', emailPayload);
-      
-      addLog(`Email sent successfully to ${emailConfig.recipientEmail}`);
-      toast.success(`Blog post "${subject}" sent via email!`);
-      
-      return true;
+      // Send email using EmailJS
+      const response = await emailjs.send(
+        emailConfig.emailjsServiceId,
+        emailConfig.emailjsTemplateId,
+        templateParams
+      );
+
+      if (response.status === 200) {
+        addLog(`Email sent successfully to ${emailConfig.recipientEmail}`);
+        toast.success(`Blog post "${subject}" sent via email!`);
+        return true;
+      } else {
+        throw new Error(`EmailJS returned status: ${response.status}`);
+      }
     } catch (error) {
       addLog(`Email sending failed: ${error}`);
-      toast.error('Failed to send email. Check console for details.');
+      toast.error('Failed to send email. Check EmailJS configuration and console for details.');
+      console.error('EmailJS Error:', error);
       return false;
     }
   };
 
   const runSingleAutomation = async () => {
-    if (!geminiApiKey || !emailConfig.recipientEmail || !emailConfig.senderEmail || !emailConfig.senderPassword) {
-      toast.error('Please fill in all configuration fields first');
+    if (!geminiApiKey || !emailConfig.recipientEmail || !emailConfig.emailjsServiceId || !emailConfig.emailjsTemplateId || !emailConfig.emailjsPublicKey) {
+      toast.error('Please fill in all configuration fields including EmailJS settings');
       return false;
     }
 
@@ -182,8 +175,8 @@ const Index = () => {
         imageUrl
       });
 
-      // Step 6: Send email
-      const emailSent = await sendEmailViaAPI(headline, content, imageUrl);
+      // Step 6: Send email via EmailJS
+      const emailSent = await sendEmailViaEmailJS(headline, content, imageUrl);
       
       if (emailSent) {
         setAutomationStatus('Automation cycle completed successfully');
@@ -206,8 +199,8 @@ const Index = () => {
   };
 
   const startAutomation = async () => {
-    if (!geminiApiKey || !emailConfig.recipientEmail || !emailConfig.senderEmail || !emailConfig.senderPassword) {
-      toast.error('Please fill in all configuration fields first');
+    if (!geminiApiKey || !emailConfig.recipientEmail || !emailConfig.emailjsServiceId || !emailConfig.emailjsTemplateId || !emailConfig.emailjsPublicKey) {
+      toast.error('Please fill in all configuration fields including EmailJS settings');
       return;
     }
 
@@ -215,10 +208,8 @@ const Index = () => {
     addLog('Starting automated blog generation...');
     toast.success('Automation started! Blogs will be generated every 3 minutes.');
 
-    // Run first cycle immediately
     await runSingleAutomation();
 
-    // Set up interval for every 3 minutes (180000 ms)
     const interval = setInterval(async () => {
       if (isAutomated) {
         await runSingleAutomation();
@@ -247,7 +238,7 @@ const Index = () => {
             AI Blog Scribe - Full Automation
           </h1>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Fully automated blog generation and email sending every 3 minutes
+            Fully automated blog generation and email sending via EmailJS
           </p>
         </div>
 
@@ -284,18 +275,36 @@ const Index = () => {
                   disabled={isAutomated}
                 />
                 <Input
-                  placeholder="Your Mailfence email"
+                  placeholder="Your sender email (for display)"
                   value={emailConfig.senderEmail}
                   onChange={(e) => setEmailConfig({...emailConfig, senderEmail: e.target.value})}
                   disabled={isAutomated}
                 />
+              </div>
+
+              <div className="space-y-3">
+                <label className="block text-sm font-medium">EmailJS Configuration</label>
                 <Input
-                  type="password"
-                  placeholder="Your Mailfence password"
-                  value={emailConfig.senderPassword}
-                  onChange={(e) => setEmailConfig({...emailConfig, senderPassword: e.target.value})}
+                  placeholder="EmailJS Service ID"
+                  value={emailConfig.emailjsServiceId}
+                  onChange={(e) => setEmailConfig({...emailConfig, emailjsServiceId: e.target.value})}
                   disabled={isAutomated}
                 />
+                <Input
+                  placeholder="EmailJS Template ID"
+                  value={emailConfig.emailjsTemplateId}
+                  onChange={(e) => setEmailConfig({...emailConfig, emailjsTemplateId: e.target.value})}
+                  disabled={isAutomated}
+                />
+                <Input
+                  placeholder="EmailJS Public Key"
+                  value={emailConfig.emailjsPublicKey}
+                  onChange={(e) => setEmailConfig({...emailConfig, emailjsPublicKey: e.target.value})}
+                  disabled={isAutomated}
+                />
+                <p className="text-xs text-gray-500">
+                  Get these from your <a href="https://www.emailjs.com/" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">EmailJS dashboard</a>
+                </p>
               </div>
             </CardContent>
           </Card>
@@ -409,14 +418,21 @@ const Index = () => {
         <div className="max-w-2xl mx-auto mt-8">
           <Card className="border-blue-200 bg-blue-50">
             <CardContent className="p-4">
+              <h4 className="font-semibold text-blue-800 mb-2">How to set up EmailJS:</h4>
+              <ul className="text-sm text-blue-700 space-y-1 mb-4">
+                <li>• Sign up at <a href="https://www.emailjs.com/" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">emailjs.com</a></li>
+                <li>• Create an email service (Gmail, Outlook, etc.)</li>
+                <li>• Create an email template with variables: to_email, subject, blog_content, image_url</li>
+                <li>• Get your Service ID, Template ID, and Public Key from the dashboard</li>
+                <li>• Enter these details in the configuration above</li>
+              </ul>
               <h4 className="font-semibold text-blue-800 mb-2">How it works:</h4>
               <ul className="text-sm text-blue-700 space-y-1">
-                <li>• Configure your Gemini API key and email settings</li>
-                <li>• Click "Start Full Automation" to begin</li>
-                <li>• The system will automatically generate topics, headlines, and blog posts</li>
-                <li>• Emails are sent every 3 minutes with new blog content</li>
+                <li>• Configure your Gemini API key and EmailJS settings</li>
+                <li>• The system generates topics, headlines, and blog posts using AI</li>
+                <li>• Emails are sent directly from the frontend using EmailJS</li>
+                <li>• Full automation runs every 3 minutes when started</li>
                 <li>• Monitor the logs to see real-time activity</li>
-                <li>• Use "Run Once" to test a single generation cycle</li>
               </ul>
             </CardContent>
           </Card>
