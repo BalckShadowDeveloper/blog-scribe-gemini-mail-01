@@ -1,10 +1,9 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Sparkles, Mail, Image, FileText, TrendingUp, Play, Stop } from 'lucide-react';
+import { Loader2, Sparkles, Mail, Image, FileText, TrendingUp, Play, Square } from 'lucide-react';
 import { toast } from 'sonner';
 
 const Index = () => {
@@ -328,7 +327,7 @@ const Index = () => {
                     variant="destructive"
                     className="flex-1"
                   >
-                    <Stop className="h-4 w-4 mr-2" />
+                    <Square className="h-4 w-4 mr-2" />
                     Stop Automation
                   </Button>
                 )}
