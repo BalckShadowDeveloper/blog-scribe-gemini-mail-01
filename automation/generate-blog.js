@@ -1,4 +1,3 @@
-
 const axios = require('axios');
 const nodemailer = require('nodemailer');
 
@@ -14,8 +13,8 @@ if (!GEMINI_API_KEY || !MAILFENCE_EMAIL || !MAILFENCE_PASSWORD || !RECIPIENT_EMA
   process.exit(1);
 }
 
-// Create Mailfence transporter
-const transporter = nodemailer.createTransporter({
+// Create Mailfence transporter with correct method name
+const transporter = nodemailer.createTransport({
   host: 'smtp.mailfence.com',
   port: 465,
   secure: true,
@@ -23,7 +22,25 @@ const transporter = nodemailer.createTransporter({
     user: MAILFENCE_EMAIL,
     pass: MAILFENCE_PASSWORD,
   },
+  // Add additional options for better reliability
+  tls: {
+    rejectUnauthorized: false
+  },
+  debug: true, // Enable debug logging
+  logger: true // Enable logging
 });
+
+// Function to verify SMTP connection
+async function verifyConnection() {
+  try {
+    await transporter.verify();
+    console.log('SMTP connection verified successfully');
+    return true;
+  } catch (error) {
+    console.error('SMTP connection verification failed:', error);
+    return false;
+  }
+}
 
 // Function to call Gemini API
 async function callGeminiAPI(prompt) {
@@ -86,9 +103,19 @@ async function generateBlogPost(headline, topic) {
   return response;
 }
 
-// Function to send email
+// Function to send email with improved error handling
 async function sendEmail(subject, content) {
+  console.log('Verifying SMTP connection...');
+  
+  const connectionValid = await verifyConnection();
+  if (!connectionValid) {
+    throw new Error('SMTP connection failed');
+  }
+  
   console.log('Sending email...');
+  console.log('From:', MAILFENCE_EMAIL);
+  console.log('To:', RECIPIENT_EMAIL);
+  console.log('Subject:', subject);
   
   const mailOptions = {
     from: MAILFENCE_EMAIL,
@@ -112,6 +139,7 @@ async function sendEmail(subject, content) {
         <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb; text-align: center; color: #666; font-size: 12px;">
           <p>Generated automatically by AI Blog Scribe</p>
           <p>Powered by Google Gemini AI</p>
+          <p>Generated at: ${new Date().toLocaleString()}</p>
         </div>
       </div>
     `,
@@ -119,10 +147,18 @@ async function sendEmail(subject, content) {
 
   try {
     const info = await transporter.sendMail(mailOptions);
-    console.log('Email sent successfully:', info.messageId);
+    console.log('Email sent successfully!');
+    console.log('Message ID:', info.messageId);
+    console.log('Response:', info.response);
     return true;
   } catch (error) {
-    console.error('Error sending email:', error);
+    console.error('Detailed error sending email:', {
+      message: error.message,
+      code: error.code,
+      command: error.command,
+      response: error.response,
+      responseCode: error.responseCode
+    });
     throw error;
   }
 }

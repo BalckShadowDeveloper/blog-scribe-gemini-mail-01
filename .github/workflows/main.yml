@@ -3,8 +3,8 @@ name: Auto Blog Generator
 
 on:
   schedule:
-    # Run every 2 minutes for more aggressive automation
-    - cron: '*/2 * * * *'
+    # Run every 5 minutes for testing (change back to desired frequency later)
+    - cron: '*/5 * * * *'
   workflow_dispatch: # Allow manual trigger
 
 jobs:
@@ -12,6 +12,9 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
+    - name: Checkpoint - Starting workflow
+      run: echo "Starting AI Blog Scribe automation at $(date)"
+      
     - name: Checkout repository
       uses: actions/checkout@v4
       
@@ -24,7 +27,26 @@ jobs:
         
     - name: Install dependencies
       working-directory: ./automation
-      run: npm install
+      run: |
+        echo "Installing dependencies..."
+        npm install
+        echo "Dependencies installed successfully"
+        
+    - name: Verify environment variables
+      env:
+        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        MAILFENCE_EMAIL: ${{ secrets.MAILFENCE_EMAIL }}
+        MAILFENCE_PASSWORD: ${{ secrets.MAILFENCE_PASSWORD }}
+        RECIPIENT_EMAIL: ${{ secrets.RECIPIENT_EMAIL }}
+      run: |
+        echo "Checking environment variables..."
+        if [ -z "$GEMINI_API_KEY" ]; then echo "ERROR: GEMINI_API_KEY is not set"; exit 1; fi
+        if [ -z "$MAILFENCE_EMAIL" ]; then echo "ERROR: MAILFENCE_EMAIL is not set"; exit 1; fi
+        if [ -z "$MAILFENCE_PASSWORD" ]; then echo "ERROR: MAILFENCE_PASSWORD is not set"; exit 1; fi
+        if [ -z "$RECIPIENT_EMAIL" ]; then echo "ERROR: RECIPIENT_EMAIL is not set"; exit 1; fi
+        echo "All environment variables are set"
+        echo "Mailfence Email: $MAILFENCE_EMAIL"
+        echo "Recipient Email: $RECIPIENT_EMAIL"
         
     - name: Generate and send blog post
       working-directory: ./automation
@@ -33,7 +55,10 @@ jobs:
         MAILFENCE_EMAIL: ${{ secrets.MAILFENCE_EMAIL }}
         MAILFENCE_PASSWORD: ${{ secrets.MAILFENCE_PASSWORD }}
         RECIPIENT_EMAIL: ${{ secrets.RECIPIENT_EMAIL }}
-      run: node generate-blog.js
+      run: |
+        echo "Starting blog generation process..."
+        node generate-blog.js
+        echo "Blog generation process completed"
 
     - name: Log completion
-      run: echo "Blog generation completed at $(date)"
+      run: echo "Blog generation completed successfully at $(date)"
