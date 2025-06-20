@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -94,43 +93,88 @@ const Index = () => {
   };
 
   const generateBlogPost = async (headline: string, topic: string) => {
-    addLog('Generating blog post...');
+    addLog('Generating SEO-optimized blog post...');
     const blogContent = await callGeminiAPI(
-      `Write a comprehensive blog post with the headline "${headline}" about the topic "${topic}". 
+      `Write a comprehensive, SEO-optimized blog post with the headline "${headline}" about the topic "${topic}". 
       
-      IMPORTANT FORMATTING REQUIREMENTS:
-      - DO NOT use any markdown formatting like ## or **
-      - Use plain text with proper paragraph breaks
-      - Structure the content with clear sections using simple text headers
-      - Make it 800-1000 words
-      - Include an engaging introduction
-      - Have 3-4 main sections with descriptive subheadings
-      - End with a compelling conclusion
-      - Use a professional yet conversational tone
-      - Make it ready for direct publishing on Blogger
-      - Separate paragraphs with double line breaks for better readability`
+      CRITICAL FORMATTING REQUIREMENTS - FOLLOW EXACTLY:
+      - DO NOT use ANY markdown symbols: no ##, no **, no *, no - for lists
+      - Use ONLY plain text with proper paragraph breaks
+      - For section headers, use ALL CAPS followed by a colon (e.g., "INTRODUCTION:")
+      - For emphasis, use CAPITAL LETTERS instead of bold/italic
+      - For lists, use numbered format (1. 2. 3.) or simple bullet points with •
+      - Separate all paragraphs with double line breaks
+      
+      SEO OPTIMIZATION REQUIREMENTS:
+      - Include the main keyword "${topic}" naturally throughout the content
+      - Use related keywords and synonyms
+      - Write meta-description worthy opening paragraph (150-160 characters)
+      - Include long-tail keywords related to ${topic}
+      - Structure content for featured snippets
+      - Use question-based subheadings that people search for
+      
+      CONTENT STRUCTURE (800-1000 words):
+      - Engaging hook in first paragraph mentioning ${topic}
+      - Include statistics or facts when relevant
+      - 3-4 main sections answering common questions about ${topic}
+      - Practical tips or actionable advice
+      - Compelling conclusion with call-to-action
+      - Professional yet conversational tone
+      - Ready for direct publishing on Blogger platform`
     );
     
-    // Clean up any remaining markdown formatting
+    // Aggressive markdown cleanup with multiple passes
     let cleanContent = blogContent
-      .replace(/##\s*/g, '') // Remove ## headers
-      .replace(/\*\*(.*?)\*\*/g, '$1') // Remove bold formatting
-      .replace(/\*(.*?)\*/g, '$1') // Remove italic formatting
-      .replace(/^\s*-\s*/gm, '• ') // Convert - to bullet points
+      // Remove all markdown headers (##, ###, ####, etc.)
+      .replace(/#{1,6}\s*/g, '')
+      // Remove bold markdown (**text**)
+      .replace(/\*\*(.*?)\*\*/g, '$1')
+      // Remove italic markdown (*text*)
+      .replace(/\*(.*?)\*/g, '$1')
+      // Remove markdown lists (- item)
+      .replace(/^\s*[-*+]\s+/gm, '• ')
+      // Remove markdown links [text](url) - keep just text
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+      // Remove any remaining asterisks used for emphasis
+      .replace(/\*/g, '')
+      // Remove any remaining hash symbols
+      .replace(/#/g, '')
+      // Clean up multiple spaces
+      .replace(/\s+/g, ' ')
+      // Ensure proper paragraph breaks
+      .replace(/\n\s*\n/g, '\n\n')
       .trim();
     
+    // Log cleanup details for debugging
     addLog(`Generated and cleaned blog post (${cleanContent.length} characters)`);
+    console.log('Content after cleanup preview:', cleanContent.substring(0, 200) + '...');
+    
     return cleanContent;
   };
 
   const generateTopicRelevantImage = async (topic: string, headline: string) => {
-    addLog('Generating topic-relevant image URL...');
+    addLog('Generating topic-specific image...');
     
-    // Create a more specific search term based on the topic and headline
-    const searchTerms = topic.toLowerCase().replace(/[^a-z0-9\s]/g, '').split(' ').slice(0, 2).join(',');
-    const imageUrl = `https://picsum.photos/800/400?random=${Date.now()}&sig=${encodeURIComponent(searchTerms)}`;
+    // Create more specific keywords based on topic and headline content
+    const topicKeywords = topic.toLowerCase()
+      .replace(/[^a-z0-9\s]/g, '')
+      .split(' ')
+      .filter(word => word.length > 2)
+      .slice(0, 3)
+      .join('-');
     
-    addLog(`Generated image URL for topic: ${topic}`);
+    const headlineKeywords = headline.toLowerCase()
+      .replace(/[^a-z0-9\s]/g, '')
+      .split(' ')
+      .filter(word => word.length > 3 && !['the', 'and', 'for', 'with', 'your'].includes(word))
+      .slice(0, 2)
+      .join('-');
+    
+    // Combine keywords for better relevance
+    const combinedKeywords = `${topicKeywords}-${headlineKeywords}`;
+    const imageUrl = `https://picsum.photos/800/400?random=${Date.now()}&sig=${encodeURIComponent(combinedKeywords)}`;
+    
+    addLog(`Generated topic-specific image with keywords: ${combinedKeywords}`);
     return imageUrl;
   };
 
