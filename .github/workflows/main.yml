@@ -1,4 +1,5 @@
 
+
 name: Auto Blog Generator
 
 on:
@@ -35,25 +36,25 @@ jobs:
     - name: Verify environment variables
       env:
         GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-        MAILFENCE_EMAIL: ${{ secrets.MAILFENCE_EMAIL }}
-        MAILFENCE_PASSWORD: ${{ secrets.MAILFENCE_PASSWORD }}
+        GMAIL_EMAIL: ${{ secrets.GMAIL_EMAIL }}
+        GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
         RECIPIENT_EMAIL: ${{ secrets.RECIPIENT_EMAIL }}
       run: |
         echo "Checking environment variables..."
         if [ -z "$GEMINI_API_KEY" ]; then echo "ERROR: GEMINI_API_KEY is not set"; exit 1; fi
-        if [ -z "$MAILFENCE_EMAIL" ]; then echo "ERROR: MAILFENCE_EMAIL is not set"; exit 1; fi
-        if [ -z "$MAILFENCE_PASSWORD" ]; then echo "ERROR: MAILFENCE_PASSWORD is not set"; exit 1; fi
+        if [ -z "$GMAIL_EMAIL" ]; then echo "ERROR: GMAIL_EMAIL is not set"; exit 1; fi
+        if [ -z "$GMAIL_APP_PASSWORD" ]; then echo "ERROR: GMAIL_APP_PASSWORD is not set"; exit 1; fi
         if [ -z "$RECIPIENT_EMAIL" ]; then echo "ERROR: RECIPIENT_EMAIL is not set"; exit 1; fi
         echo "All environment variables are set"
-        echo "Mailfence Email: $MAILFENCE_EMAIL"
+        echo "Gmail Email: $GMAIL_EMAIL"
         echo "Recipient Email: $RECIPIENT_EMAIL"
         
     - name: Generate and send blog post
       working-directory: ./automation
       env:
         GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-        MAILFENCE_EMAIL: ${{ secrets.MAILFENCE_EMAIL }}
-        MAILFENCE_PASSWORD: ${{ secrets.MAILFENCE_PASSWORD }}
+        GMAIL_EMAIL: ${{ secrets.GMAIL_EMAIL }}
+        GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
         RECIPIENT_EMAIL: ${{ secrets.RECIPIENT_EMAIL }}
       run: |
         echo "Starting blog generation process..."
@@ -62,3 +63,4 @@ jobs:
 
     - name: Log completion
       run: echo "Blog generation completed successfully at $(date)"
+

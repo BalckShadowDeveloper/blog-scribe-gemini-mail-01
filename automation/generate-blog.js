@@ -3,24 +3,22 @@ const nodemailer = require('nodemailer');
 
 // Configuration from environment variables
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-const MAILFENCE_EMAIL = process.env.MAILFENCE_EMAIL;
-const MAILFENCE_PASSWORD = process.env.MAILFENCE_PASSWORD;
+const GMAIL_EMAIL = process.env.GMAIL_EMAIL;
+const GMAIL_APP_PASSWORD = process.env.GMAIL_APP_PASSWORD;
 const RECIPIENT_EMAIL = process.env.RECIPIENT_EMAIL;
 
-if (!GEMINI_API_KEY || !MAILFENCE_EMAIL || !MAILFENCE_PASSWORD || !RECIPIENT_EMAIL) {
+if (!GEMINI_API_KEY || !GMAIL_EMAIL || !GMAIL_APP_PASSWORD || !RECIPIENT_EMAIL) {
   console.error('Missing required environment variables');
-  console.error('Required: GEMINI_API_KEY, MAILFENCE_EMAIL, MAILFENCE_PASSWORD, RECIPIENT_EMAIL');
+  console.error('Required: GEMINI_API_KEY, GMAIL_EMAIL, GMAIL_APP_PASSWORD, RECIPIENT_EMAIL');
   process.exit(1);
 }
 
-// Create Mailfence transporter with correct method name
+// Create Gmail transporter
 const transporter = nodemailer.createTransport({
-  host: 'smtp.mailfence.com',
-  port: 465,
-  secure: true,
+  service: 'gmail',
   auth: {
-    user: MAILFENCE_EMAIL,
-    pass: MAILFENCE_PASSWORD,
+    user: GMAIL_EMAIL,
+    pass: GMAIL_APP_PASSWORD,
   },
   // Add additional options for better reliability
   tls: {
@@ -34,10 +32,10 @@ const transporter = nodemailer.createTransport({
 async function verifyConnection() {
   try {
     await transporter.verify();
-    console.log('SMTP connection verified successfully');
+    console.log('Gmail SMTP connection verified successfully');
     return true;
   } catch (error) {
-    console.error('SMTP connection verification failed:', error);
+    console.error('Gmail SMTP connection verification failed:', error);
     return false;
   }
 }
@@ -105,20 +103,20 @@ async function generateBlogPost(headline, topic) {
 
 // Function to send email with improved error handling
 async function sendEmail(subject, content) {
-  console.log('Verifying SMTP connection...');
+  console.log('Verifying Gmail SMTP connection...');
   
   const connectionValid = await verifyConnection();
   if (!connectionValid) {
-    throw new Error('SMTP connection failed');
+    throw new Error('Gmail SMTP connection failed');
   }
   
-  console.log('Sending email...');
-  console.log('From:', MAILFENCE_EMAIL);
+  console.log('Sending email via Gmail...');
+  console.log('From:', GMAIL_EMAIL);
   console.log('To:', RECIPIENT_EMAIL);
   console.log('Subject:', subject);
   
   const mailOptions = {
-    from: MAILFENCE_EMAIL,
+    from: GMAIL_EMAIL,
     to: RECIPIENT_EMAIL,
     subject: subject,
     html: `
@@ -147,12 +145,12 @@ async function sendEmail(subject, content) {
 
   try {
     const info = await transporter.sendMail(mailOptions);
-    console.log('Email sent successfully!');
+    console.log('Email sent successfully via Gmail!');
     console.log('Message ID:', info.messageId);
     console.log('Response:', info.response);
     return true;
   } catch (error) {
-    console.error('Detailed error sending email:', {
+    console.error('Detailed error sending email via Gmail:', {
       message: error.message,
       code: error.code,
       command: error.command,

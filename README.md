@@ -1,13 +1,14 @@
 
+
 # AI Blog Scribe
 
-AI Blog Scribe is an automated blog post generation system that creates trending blog posts using Google's Gemini AI and sends them via email through Mailfence SMTP.
+AI Blog Scribe is an automated blog post generation system that creates trending blog posts using Google's Gemini AI and sends them via email through Gmail SMTP.
 
 ## Features
 
 - 🤖 **AI-Powered Content**: Uses Google Gemini AI to generate trending topics and comprehensive blog posts
-- 📧 **Automated Email Delivery**: Sends generated content via Mailfence SMTP
-- ⚡ **GitHub Actions Automation**: Runs automatically every 3 minutes (3-4 posts per 10 minutes)
+- 📧 **Automated Email Delivery**: Sends generated content via Gmail SMTP
+- ⚡ **GitHub Actions Automation**: Runs automatically every 5 minutes
 - 🎨 **Beautiful Frontend**: Interactive web interface to manually generate and test content
 - 📱 **Responsive Design**: Works seamlessly on desktop and mobile devices
 
@@ -21,7 +22,7 @@ You can view and interact with the application at: [Your Lovable Project URL]
 2. **Headline Creation**: Generates 5 engaging, SEO-friendly headlines for each topic
 3. **Content Creation**: Writes comprehensive 1000-1200 word blog posts
 4. **Image Integration**: Adds relevant placeholder images
-5. **Email Delivery**: Sends formatted content via Mailfence SMTP
+5. **Email Delivery**: Sends formatted content via Gmail SMTP
 
 ## GitHub Actions Setup
 
@@ -35,8 +36,8 @@ To enable automated blog generation, add these secrets to your GitHub repository
 | Secret Name | Description | Example |
 |-------------|-------------|---------|
 | `GEMINI_API_KEY` | Your Google Gemini API key | `AIza...` |
-| `MAILFENCE_EMAIL` | Your Mailfence email address | `your-email@mailfence.com` |
-| `MAILFENCE_PASSWORD` | Your Mailfence password | `your-password` |
+| `GMAIL_EMAIL` | Your Gmail email address | `your-email@gmail.com` |
+| `GMAIL_APP_PASSWORD` | Your Gmail App Password | `xxxx xxxx xxxx xxxx` |
 | `RECIPIENT_EMAIL` | Email to send blog posts to | `recipient@example.com` |
 
 ### Getting Your Gemini API Key
@@ -45,17 +46,26 @@ To enable automated blog generation, add these secrets to your GitHub repository
 2. Create a new API key
 3. Copy the key and add it as `GEMINI_API_KEY` secret
 
-### Mailfence Configuration
+### Gmail Configuration
 
-The automation uses these Mailfence SMTP settings:
-- **SMTP Server**: smtp.mailfence.com
-- **Port**: 465 (SSL/TLS)
-- **Authentication**: Your Mailfence email and password
+**Important**: You need to use Gmail App Passwords, not your regular Gmail password.
+
+1. **Enable 2-Factor Authentication** on your Gmail account (required for App Passwords)
+2. **Generate an App Password**:
+   - Go to your Google Account settings
+   - Navigate to Security → 2-Step Verification → App passwords
+   - Select "Mail" and your device
+   - Google will generate a 16-character password
+   - Use this App Password as `GMAIL_APP_PASSWORD` secret
+
+The automation uses these Gmail SMTP settings:
+- **Service**: Gmail (handled automatically by nodemailer)
+- **Authentication**: Your Gmail email and App Password
 
 ### Workflow Schedule
 
 The GitHub Actions workflow (`/.github/workflows/main.yml`) runs:
-- **Automatically**: Every 3 minutes via cron schedule
+- **Automatically**: Every 5 minutes via cron schedule
 - **Manually**: Via workflow_dispatch trigger in GitHub Actions tab
 
 ## Local Development
@@ -95,8 +105,8 @@ npm run dev
 1. Create a `.env` file in the `automation` directory:
 ```env
 GEMINI_API_KEY=your_gemini_api_key
-MAILFENCE_EMAIL=your_mailfence_email
-MAILFENCE_PASSWORD=your_mailfence_password
+GMAIL_EMAIL=your_gmail_email
+GMAIL_APP_PASSWORD=your_gmail_app_password
 RECIPIENT_EMAIL=recipient_email
 ```
 
@@ -118,7 +128,7 @@ node generate-blog.js
 
 - **Frontend**: React, TypeScript, Tailwind CSS, Shadcn UI
 - **AI**: Google Gemini 1.5 Flash
-- **Email**: Mailfence SMTP with Nodemailer
+- **Email**: Gmail SMTP with Nodemailer
 - **Automation**: GitHub Actions, Node.js
 - **Build Tool**: Vite
 
@@ -140,6 +150,15 @@ ai-blog-scribe/
 └── package.json             # Frontend dependencies
 ```
 
+## Troubleshooting Gmail Setup
+
+If you're having issues with Gmail authentication:
+
+1. **Verify 2FA is enabled** on your Google account
+2. **Use App Password**, not your regular password
+3. **Check Gmail security settings** - ensure "Less secure app access" is not blocking the connection
+4. **Try generating a new App Password** if the current one isn't working
+
 ## Contributing
 
 1. Fork the repository
@@ -158,13 +177,15 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 If you encounter any issues:
 
 1. Check the GitHub Actions logs for automation errors
-2. Verify your API keys and email credentials
+2. Verify your API keys and Gmail App Password
 3. Ensure all required secrets are properly set
-4. Check the [Lovable documentation](https://docs.lovable.dev/) for additional help
+4. Check Gmail 2FA and App Password configuration
+5. Check the [Lovable documentation](https://docs.lovable.dev/) for additional help
 
 ## Acknowledgments
 
 - Google Gemini AI for content generation
-- Mailfence for reliable email delivery
+- Gmail for reliable email delivery
 - Lovable platform for rapid development
 - Shadcn UI for beautiful components
+
