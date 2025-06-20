@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { Loader2, Sparkles, Mail, Image, FileText, TrendingUp, Play, Square } from 'lucide-react';
 import { toast } from 'sonner';
 import emailjs from '@emailjs/browser';
+import ConfigurationForm from '@/components/ConfigurationForm';
+import AutomationControl from '@/components/AutomationControl';
+import AutomationLogs from '@/components/AutomationLogs';
+import BlogPostPreview from '@/components/BlogPostPreview';
+import { useContentValidation } from '@/hooks/useContentValidation';
+import { useRandomScheduling } from '@/hooks/useRandomScheduling';
+import { Card, CardContent } from '@/components/ui/card';
 
 const Index = () => {
   const [geminiApiKey, setGeminiApiKey] = useState('');
@@ -29,6 +31,9 @@ const Index = () => {
   const [automationStatus, setAutomationStatus] = useState('Ready to start automation');
   const [automationLogs, setAutomationLogs] = useState<string[]>([]);
 
+  const { performMultipleValidations, validationLogs } = useContentValidation();
+  const { generateRandomSchedule, getNextScheduledTime, removeCompletedTime, clearSchedule } = useRandomScheduling();
+
   // Cleanup interval on unmount
   useEffect(() => {
     return () => {
@@ -41,7 +46,7 @@ const Index = () => {
   const addLog = (message: string) => {
     const timestamp = new Date().toLocaleTimeString();
     const logMessage = `[${timestamp}] ${message}`;
-    setAutomationLogs(prev => [...prev.slice(-9), logMessage]); // Keep last 10 logs
+    setAutomationLogs(prev => [...prev.slice(-9), logMessage]);
     console.log(logMessage);
   };
 
@@ -98,12 +103,14 @@ const Index = () => {
       `Write a comprehensive, SEO-optimized blog post with the headline "${headline}" about the topic "${topic}". 
       
       CRITICAL FORMATTING REQUIREMENTS - FOLLOW EXACTLY:
-      - DO NOT use ANY markdown symbols: no ##, no **, no *, no - for lists
+      - DO NOT use ANY markdown symbols: no ##, no **, no *, no - for lists, no # symbols
       - Use ONLY plain text with proper paragraph breaks
       - For section headers, use ALL CAPS followed by a colon (e.g., "INTRODUCTION:")
       - For emphasis, use CAPITAL LETTERS instead of bold/italic
       - For lists, use numbered format (1. 2. 3.) or simple bullet points with •
       - Separate all paragraphs with double line breaks
+      - NO ASTERISKS (*) AT ALL
+      - NO HASH SYMBOLS (#) AT ALL
       
       SEO OPTIMIZATION REQUIREMENTS:
       - Include the main keyword "${topic}" naturally throughout the content
@@ -120,42 +127,23 @@ const Index = () => {
       - Practical tips or actionable advice
       - Compelling conclusion with call-to-action
       - Professional yet conversational tone
-      - Ready for direct publishing on Blogger platform`
+      - Ready for direct publishing on Blogger platform
+      
+      REMEMBER: ABSOLUTELY NO MARKDOWN FORMATTING - PLAIN TEXT ONLY!`
     );
     
-    // Aggressive markdown cleanup with multiple passes
-    let cleanContent = blogContent
-      // Remove all markdown headers (##, ###, ####, etc.)
-      .replace(/#{1,6}\s*/g, '')
-      // Remove bold markdown (**text**)
-      .replace(/\*\*(.*?)\*\*/g, '$1')
-      // Remove italic markdown (*text*)
-      .replace(/\*(.*?)\*/g, '$1')
-      // Remove markdown lists (- item)
-      .replace(/^\s*[-*+]\s+/gm, '• ')
-      // Remove markdown links [text](url) - keep just text
-      .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
-      // Remove any remaining asterisks used for emphasis
-      .replace(/\*/g, '')
-      // Remove any remaining hash symbols
-      .replace(/#/g, '')
-      // Clean up multiple spaces
-      .replace(/\s+/g, ' ')
-      // Ensure proper paragraph breaks
-      .replace(/\n\s*\n/g, '\n\n')
-      .trim();
+    addLog('Running multiple content validation passes...');
+    const validatedContent = await performMultipleValidations(blogContent);
     
-    // Log cleanup details for debugging
-    addLog(`Generated and cleaned blog post (${cleanContent.length} characters)`);
-    console.log('Content after cleanup preview:', cleanContent.substring(0, 200) + '...');
+    addLog(`Generated and validated blog post (${validatedContent.length} characters)`);
+    console.log('Content after validation preview:', validatedContent.substring(0, 200) + '...');
     
-    return cleanContent;
+    return validatedContent;
   };
 
   const generateTopicRelevantImage = async (topic: string, headline: string) => {
     addLog('Generating topic-specific image...');
     
-    // Create more specific keywords based on topic and headline content
     const topicKeywords = topic.toLowerCase()
       .replace(/[^a-z0-9\s]/g, '')
       .split(' ')
@@ -170,7 +158,6 @@ const Index = () => {
       .slice(0, 2)
       .join('-');
     
-    // Combine keywords for better relevance
     const combinedKeywords = `${topicKeywords}-${headlineKeywords}`;
     const imageUrl = `https://picsum.photos/800/400?random=${Date.now()}&sig=${encodeURIComponent(combinedKeywords)}`;
     
@@ -179,7 +166,6 @@ const Index = () => {
   };
 
   const formatForBlogger = (content: string, headline: string, topic: string, imageUrl: string) => {
-    // Format content specifically for Blogger
     const formattedContent = `
 <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
   <div style="text-align: center; margin-bottom: 30px;">
@@ -211,13 +197,10 @@ const Index = () => {
     }
 
     try {
-      // Initialize EmailJS with your public key
       emailjs.init(emailConfig.emailjsPublicKey);
 
-      // Format content for Blogger
       const bloggerFormattedContent = formatForBlogger(content, subject, currentBlog.topic, imageUrl);
 
-      // Prepare email template parameters
       const templateParams = {
         to_email: emailConfig.recipientEmail,
         from_email: emailConfig.senderEmail,
@@ -228,7 +211,6 @@ const Index = () => {
         topic: currentBlog.topic
       };
 
-      // Send email using EmailJS
       const response = await emailjs.send(
         emailConfig.emailjsServiceId,
         emailConfig.emailjsTemplateId,
@@ -260,19 +242,11 @@ const Index = () => {
     setAutomationStatus('Running automation cycle...');
 
     try {
-      // Step 1: Generate topic
       const topic = await generateTrendingTopic();
-      
-      // Step 2: Generate headline
       const headline = await generateHeadline(topic);
-      
-      // Step 3: Generate blog post
       const content = await generateBlogPost(headline, topic);
-      
-      // Step 4: Generate topic-relevant image URL AFTER getting content
       const imageUrl = await generateTopicRelevantImage(topic, headline);
       
-      // Step 5: Update current blog
       setCurrentBlog({
         topic,
         headline,
@@ -280,7 +254,6 @@ const Index = () => {
         imageUrl
       });
 
-      // Step 6: Send email via EmailJS with Blogger formatting
       const emailSent = await sendEmailViaEmailJS(headline, content, imageUrl);
       
       if (emailSent) {
@@ -310,16 +283,32 @@ const Index = () => {
     }
 
     setIsAutomated(true);
-    addLog('Starting automated blog generation...');
-    toast.success('Automation started! Blogs will be generated every 3 minutes.');
+    addLog('Starting automated blog generation with random scheduling...');
+    
+    // Generate random schedule for the hour
+    const schedule = generateRandomSchedule();
+    toast.success(`Automation started! ${schedule.length} emails scheduled randomly over the next hour.`);
 
+    // Run first automation immediately
     await runSingleAutomation();
 
+    // Set up interval to check for scheduled times
     const interval = setInterval(async () => {
-      if (isAutomated) {
+      if (!isAutomated) return;
+      
+      const nextTime = getNextScheduledTime();
+      if (nextTime && Date.now() >= nextTime) {
+        addLog('Executing scheduled automation...');
         await runSingleAutomation();
+        removeCompletedTime();
+        
+        // If no more scheduled times, generate new schedule
+        if (getNextScheduledTime() === null) {
+          const newSchedule = generateRandomSchedule();
+          addLog(`Generated new random schedule: ${newSchedule.length} emails over next hour`);
+        }
       }
-    }, 180000);
+    }, 30000); // Check every 30 seconds
 
     setAutomationInterval(interval);
   };
@@ -330,6 +319,7 @@ const Index = () => {
       clearInterval(automationInterval);
       setAutomationInterval(null);
     }
+    clearSchedule();
     setAutomationStatus('Automation stopped');
     addLog('Automation stopped by user');
     toast.info('Automation stopped');
@@ -343,201 +333,60 @@ const Index = () => {
             AI Blog Scribe - Full Automation
           </h1>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Fully automated blog generation and email sending via EmailJS
+            Fully automated blog generation with random human-like scheduling and content validation
           </p>
         </div>
 
         {/* Configuration Section */}
         <div className="max-w-2xl mx-auto mb-8">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Sparkles className="h-6 w-6 text-purple-500" />
-                Configuration
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-2">Gemini API Key</label>
-                <Input
-                  type="password"
-                  placeholder="Enter your Gemini API key"
-                  value={geminiApiKey}
-                  onChange={(e) => setGeminiApiKey(e.target.value)}
-                  disabled={isAutomated}
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  Get your API key from <a href="https://makersuite.google.com/app/apikey" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">Google AI Studio</a>
-                </p>
-              </div>
-              
-              <div className="space-y-3">
-                <label className="block text-sm font-medium">Email Configuration</label>
-                <Input
-                  placeholder="Recipient email"
-                  value={emailConfig.recipientEmail}
-                  onChange={(e) => setEmailConfig({...emailConfig, recipientEmail: e.target.value})}
-                  disabled={isAutomated}
-                />
-                <Input
-                  placeholder="Your sender email (for display)"
-                  value={emailConfig.senderEmail}
-                  onChange={(e) => setEmailConfig({...emailConfig, senderEmail: e.target.value})}
-                  disabled={isAutomated}
-                />
-              </div>
-
-              <div className="space-y-3">
-                <label className="block text-sm font-medium">EmailJS Configuration</label>
-                <Input
-                  placeholder="EmailJS Service ID"
-                  value={emailConfig.emailjsServiceId}
-                  onChange={(e) => setEmailConfig({...emailConfig, emailjsServiceId: e.target.value})}
-                  disabled={isAutomated}
-                />
-                <Input
-                  placeholder="EmailJS Template ID"
-                  value={emailConfig.emailjsTemplateId}
-                  onChange={(e) => setEmailConfig({...emailConfig, emailjsTemplateId: e.target.value})}
-                  disabled={isAutomated}
-                />
-                <Input
-                  placeholder="EmailJS Public Key"
-                  value={emailConfig.emailjsPublicKey}
-                  onChange={(e) => setEmailConfig({...emailConfig, emailjsPublicKey: e.target.value})}
-                  disabled={isAutomated}
-                />
-                <p className="text-xs text-gray-500">
-                  Get these from your <a href="https://www.emailjs.com/" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">EmailJS dashboard</a>
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+          <ConfigurationForm
+            geminiApiKey={geminiApiKey}
+            setGeminiApiKey={setGeminiApiKey}
+            emailConfig={emailConfig}
+            setEmailConfig={setEmailConfig}
+            isAutomated={isAutomated}
+          />
         </div>
 
         {/* Automation Control */}
         <div className="max-w-2xl mx-auto mb-8">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Play className="h-6 w-6 text-green-500" />
-                Automation Control
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex gap-4">
-                {!isAutomated ? (
-                  <Button 
-                    onClick={startAutomation}
-                    disabled={loading}
-                    className="flex-1 bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600"
-                  >
-                    {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Play className="h-4 w-4 mr-2" />}
-                    Start Full Automation
-                  </Button>
-                ) : (
-                  <Button 
-                    onClick={stopAutomation}
-                    variant="destructive"
-                    className="flex-1"
-                  >
-                    <Square className="h-4 w-4 mr-2" />
-                    Stop Automation
-                  </Button>
-                )}
-                
-                <Button 
-                  onClick={runSingleAutomation}
-                  disabled={loading || isAutomated}
-                  variant="outline"
-                >
-                  {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Sparkles className="h-4 w-4 mr-2" />}
-                  Run Once
-                </Button>
-              </div>
-              
-              <div className="p-3 bg-gray-50 rounded-lg">
-                <p className="text-sm font-medium text-gray-700">Status: {automationStatus}</p>
-                {isAutomated && (
-                  <p className="text-xs text-green-600 mt-1">
-                    ✅ Automation running - Next cycle in ~3 minutes
-                  </p>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+          <AutomationControl
+            isAutomated={isAutomated}
+            loading={loading}
+            automationStatus={automationStatus}
+            startAutomation={startAutomation}
+            stopAutomation={stopAutomation}
+            runSingleAutomation={runSingleAutomation}
+          />
         </div>
 
         {/* Automation Logs */}
         <div className="max-w-2xl mx-auto mb-8">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <FileText className="h-6 w-6 text-blue-500" />
-                Automation Logs
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="bg-black text-green-400 p-4 rounded-lg font-mono text-sm h-48 overflow-y-auto">
-                {automationLogs.length === 0 ? (
-                  <p className="text-gray-500">No logs yet. Start automation to see activity...</p>
-                ) : (
-                  automationLogs.map((log, index) => (
-                    <div key={index} className="mb-1">{log}</div>
-                  ))
-                )}
-              </div>
-            </CardContent>
-          </Card>
+          <AutomationLogs automationLogs={[...automationLogs, ...validationLogs]} />
         </div>
 
         {/* Current Blog Preview */}
-        {currentBlog.content && (
-          <div className="max-w-4xl mx-auto">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Mail className="h-6 w-6 text-purple-500" />
-                  Latest Generated Blog Post
-                </CardTitle>
-                <div className="space-y-2">
-                  <Badge variant="secondary">{currentBlog.topic}</Badge>
-                  <h3 className="text-lg font-semibold">{currentBlog.headline}</h3>
-                </div>
-              </CardHeader>
-              <CardContent>
-                {currentBlog.imageUrl && (
-                  <div className="mb-6">
-                    <img src={currentBlog.imageUrl} alt="Blog post image" className="w-full h-64 object-cover rounded-lg" />
-                  </div>
-                )}
-                <div className="prose max-w-none">
-                  <pre className="whitespace-pre-wrap font-sans text-sm max-h-96 overflow-y-auto">{currentBlog.content}</pre>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        )}
+        <div className="max-w-4xl mx-auto mb-8">
+          <BlogPostPreview currentBlog={currentBlog} />
+        </div>
 
         {/* Instructions */}
         <div className="max-w-2xl mx-auto mt-8">
           <Card className="border-blue-200 bg-blue-50">
             <CardContent className="p-4">
-              <h4 className="font-semibold text-blue-800 mb-2">How to set up EmailJS:</h4>
+              <h4 className="font-semibold text-blue-800 mb-2">Enhanced Features:</h4>
               <ul className="text-sm text-blue-700 space-y-1 mb-4">
-                <li>• Sign up at <a href="https://www.emailjs.com/" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">emailjs.com</a></li>
-                <li>• Create an email service (Gmail, Outlook, etc.)</li>
-                <li>• Create an email template with variables: to_email, subject, blog_content, image_url</li>
-                <li>• Get your Service ID, Template ID, and Public Key from the dashboard</li>
-                <li>• Enter these details in the configuration above</li>
+                <li>• 4-step content validation to eliminate ALL markdown formatting</li>
+                <li>• Random scheduling: 3-4 emails per hour at human-like intervals</li>
+                <li>• Real-time validation logs for transparency</li>
+                <li>• Blogger-ready HTML formatting with no ** or ## symbols</li>
               </ul>
               <h4 className="font-semibold text-blue-800 mb-2">How it works:</h4>
               <ul className="text-sm text-blue-700 space-y-1">
                 <li>• Configure your Gemini API key and EmailJS settings</li>
-                <li>• The system generates topics, headlines, and blog posts using AI</li>
-                <li>• Emails are sent directly from the frontend using EmailJS</li>
-                <li>• Full automation runs every 3 minutes when started</li>
-                <li>• Monitor the logs to see real-time activity</li>
+                <li>• Content goes through 4 validation passes before sending</li>
+                <li>• Random scheduling mimics human behavior patterns</li>
+                <li>• Monitor validation and automation logs in real-time</li>
               </ul>
             </CardContent>
           </Card>
