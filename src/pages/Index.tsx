@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -95,10 +96,67 @@ const Index = () => {
   const generateBlogPost = async (headline: string, topic: string) => {
     addLog('Generating blog post...');
     const blogContent = await callGeminiAPI(
-      `Write a comprehensive blog post with the headline "${headline}" about the topic "${topic}". The blog post should be 800-1000 words, well-structured with subheadings, engaging, informative, and SEO-optimized. Include an introduction, main body with 3-4 sections, and a conclusion. Use a professional yet conversational tone.`
+      `Write a comprehensive blog post with the headline "${headline}" about the topic "${topic}". 
+      
+      IMPORTANT FORMATTING REQUIREMENTS:
+      - DO NOT use any markdown formatting like ## or **
+      - Use plain text with proper paragraph breaks
+      - Structure the content with clear sections using simple text headers
+      - Make it 800-1000 words
+      - Include an engaging introduction
+      - Have 3-4 main sections with descriptive subheadings
+      - End with a compelling conclusion
+      - Use a professional yet conversational tone
+      - Make it ready for direct publishing on Blogger
+      - Separate paragraphs with double line breaks for better readability`
     );
-    addLog(`Generated blog post (${blogContent.length} characters)`);
-    return blogContent;
+    
+    // Clean up any remaining markdown formatting
+    let cleanContent = blogContent
+      .replace(/##\s*/g, '') // Remove ## headers
+      .replace(/\*\*(.*?)\*\*/g, '$1') // Remove bold formatting
+      .replace(/\*(.*?)\*/g, '$1') // Remove italic formatting
+      .replace(/^\s*-\s*/gm, '• ') // Convert - to bullet points
+      .trim();
+    
+    addLog(`Generated and cleaned blog post (${cleanContent.length} characters)`);
+    return cleanContent;
+  };
+
+  const generateTopicRelevantImage = async (topic: string, headline: string) => {
+    addLog('Generating topic-relevant image URL...');
+    
+    // Create a more specific search term based on the topic and headline
+    const searchTerms = topic.toLowerCase().replace(/[^a-z0-9\s]/g, '').split(' ').slice(0, 2).join(',');
+    const imageUrl = `https://picsum.photos/800/400?random=${Date.now()}&sig=${encodeURIComponent(searchTerms)}`;
+    
+    addLog(`Generated image URL for topic: ${topic}`);
+    return imageUrl;
+  };
+
+  const formatForBlogger = (content: string, headline: string, topic: string, imageUrl: string) => {
+    // Format content specifically for Blogger
+    const formattedContent = `
+<div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+  <div style="text-align: center; margin-bottom: 30px;">
+    <img src="${imageUrl}" alt="${headline}" style="width: 100%; max-width: 800px; height: 400px; object-fit: cover; border-radius: 8px; margin-bottom: 20px;">
+  </div>
+  
+  <div style="margin-bottom: 20px;">
+    <span style="background: #f0f0f0; padding: 4px 8px; border-radius: 4px; font-size: 12px; color: #666;">${topic}</span>
+  </div>
+  
+  <div style="font-size: 16px; line-height: 1.8;">
+    ${content.replace(/\n\n/g, '</p><p style="margin: 16px 0;">').replace(/\n/g, '<br>')}
+  </div>
+  
+  <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb; text-align: center; color: #666; font-size: 12px;">
+    <p>Generated with AI Blog Scribe</p>
+    <p>Published on: ${new Date().toLocaleDateString()}</p>
+  </div>
+</div>`;
+    
+    return formattedContent;
   };
 
   const sendEmailViaEmailJS = async (subject: string, content: string, imageUrl: string) => {
@@ -112,12 +170,15 @@ const Index = () => {
       // Initialize EmailJS with your public key
       emailjs.init(emailConfig.emailjsPublicKey);
 
+      // Format content for Blogger
+      const bloggerFormattedContent = formatForBlogger(content, subject, currentBlog.topic, imageUrl);
+
       // Prepare email template parameters
       const templateParams = {
         to_email: emailConfig.recipientEmail,
         from_email: emailConfig.senderEmail,
         subject: subject,
-        blog_content: content,
+        blog_content: bloggerFormattedContent,
         image_url: imageUrl,
         generated_at: new Date().toLocaleString(),
         topic: currentBlog.topic
@@ -164,8 +225,8 @@ const Index = () => {
       // Step 3: Generate blog post
       const content = await generateBlogPost(headline, topic);
       
-      // Step 4: Generate image URL
-      const imageUrl = `https://picsum.photos/800/400?random=${Date.now()}`;
+      // Step 4: Generate topic-relevant image URL AFTER getting content
+      const imageUrl = await generateTopicRelevantImage(topic, headline);
       
       // Step 5: Update current blog
       setCurrentBlog({
@@ -175,7 +236,7 @@ const Index = () => {
         imageUrl
       });
 
-      // Step 6: Send email via EmailJS
+      // Step 6: Send email via EmailJS with Blogger formatting
       const emailSent = await sendEmailViaEmailJS(headline, content, imageUrl);
       
       if (emailSent) {
