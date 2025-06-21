@@ -156,45 +156,64 @@ const Index = () => {
   const generateBlogPost = async (headline: string, topic: string) => {
     addLog('Generating professionally formatted blog post...');
     const blogContent = await callGeminiAPI(
-      `Write a VIRAL, comprehensive blog post with the headline "${headline}" about "${topic}".
-      
+      `Write a comprehensive, engaging blog post with the headline "${headline}" about "${topic}".
+
       CRITICAL FORMATTING REQUIREMENTS:
-      - NO markdown symbols like hash, asterisk, underscore, backtick, or tilde AT ALL
-      - Use natural paragraph breaks and proper sentence flow
-      - Write section headers as normal sentences, not ALL CAPS
-      - Use conversational, engaging tone throughout
-      - NO "INTRODUCTION:" or "CONCLUSION:" labels
-      - Make it flow like a natural article
+      - Write in PLAIN TEXT only - absolutely NO markdown formatting
+      - Structure content in clear, separate paragraphs
+      - Each paragraph should be 2-4 sentences maximum
+      - Use simple, natural transitions between paragraphs
+      - NO section headers, labels, or formatting symbols
+      - Write in a conversational, engaging tone
       
-      STRUCTURE (1000-1200 words):
+      CONTENT STRUCTURE (800-1000 words):
       
-      Start with a compelling hook about ${topic} that grabs attention immediately.
+      Start with an engaging opening paragraph that hooks the reader about ${topic}.
       
-      Then naturally flow into explaining why this matters now and why people need to know about ${topic}.
+      Write a second paragraph explaining why this topic matters right now.
       
-      Create 4-5 natural sections that cover:
-      - The surprising truth most people don't know
-      - Why conventional wisdom is wrong
-      - The proven method that actually works
-      - Real examples and success stories
-      - Common mistakes to avoid
+      Continue with 4-6 well-structured paragraphs covering:
+      - The main problem or challenge people face
+      - Why traditional approaches don't work
+      - The solution or method that actually works
+      - Specific benefits and results people can expect
+      - Real examples or practical applications
+      - Action steps readers can take immediately
       
-      Include throughout:
-      - Exact keyword "${topic}" 8-12 times naturally
-      - Specific statistics and data points
-      - Personal stories or case studies
-      - Actionable steps readers can take
-      - Controversial or contrarian viewpoints
+      End with a compelling closing paragraph that encourages engagement.
       
-      End with a strong call-to-action encouraging engagement.
+      IMPORTANT RULES:
+      - Each paragraph must be separated by a blank line
+      - No bullet points, numbered lists, or formatting
+      - Keep paragraphs short and readable
+      - Use the keyword "${topic}" naturally 6-8 times throughout
+      - Include specific details and actionable advice
+      - Write as one continuous, well-flowing article
       
-      Write in a natural, conversational style. NO section labels or ALL CAPS headers.
-      Make every paragraph flow naturally into the next.
-      `
+      Focus on providing real value and practical insights about ${topic}.`
     );
     
+    // Enhanced content formatting to ensure proper paragraph structure
+    let cleanContent = blogContent
+      // Remove any remaining markdown symbols
+      .replace(/#{1,6}|[*_`~]/g, '')
+      // Remove section labels and headers
+      .replace(/^(INTRODUCTION|CONCLUSION|THE PROBLEM|THE SOLUTION|BENEFITS|ACTION STEPS):\s*/gim, '')
+      // Clean up extra whitespace but preserve paragraph breaks
+      .replace(/[ \t]+/g, ' ')
+      .replace(/\n[ \t]*\n/g, '\n\n')
+      .trim();
+
+    // Ensure proper paragraph structure
+    const paragraphs = cleanContent.split('\n\n')
+      .filter(p => p.trim().length > 50) // Filter out very short segments
+      .map(p => p.trim().replace(/\n/g, ' ')); // Clean each paragraph
+
+    // Rejoin with proper spacing
+    const formattedContent = paragraphs.join('\n\n');
+    
     addLog('Running enhanced content validation...');
-    const validatedContent = await performMultipleValidations(blogContent);
+    const validatedContent = await performMultipleValidations(formattedContent);
     
     addLog(`Generated professionally formatted blog post (${validatedContent.length} characters)`);
     return validatedContent;
@@ -225,37 +244,15 @@ const Index = () => {
   };
 
   const formatForBlogger = (content: string, headline: string, topic: string, imageUrl: string) => {
-    // AGGRESSIVE markdown removal - remove ALL instances
-    let cleanContent = content
-      // Remove ALL hash symbols and everything after them on the same line
-      .replace(/#{1,6}.*$/gm, '')
-      // Remove numbered headers like "### 1. Title"
-      .replace(/#{1,6}\s*\d+\.\s*.*$/gm, '')
-      // Remove any remaining hash symbols
-      .replace(/#/g, '')
-      // Remove all asterisk formatting
-      .replace(/\*{1,3}(.*?)\*{1,3}/g, '$1')
-      .replace(/\*/g, '')
-      // Remove any remaining markdown
-      .replace(/`([^`]+)`/g, '$1')
-      .replace(/_{2,}(.*?)_{2,}/g, '$1')
-      .replace(/~~(.*?)~~/g, '$1')
-      // Clean up extra spaces and line breaks
-      .replace(/\s+/g, ' ')
-      .replace(/\n\s*\n/g, '\n\n')
-      .trim();
-
-    // Additional pass to ensure no markdown survives
-    cleanContent = cleanContent
-      .split('\n')
-      .map(line => line.replace(/^[#*-+]\s*/, '').trim())
-      .filter(line => line.length > 0)
-      .join('\n\n');
+    // Split content into proper paragraphs and format for HTML
+    const paragraphs = content.split('\n\n')
+      .filter(p => p.trim().length > 0)
+      .map(p => p.trim());
 
     // Generate second image for variety
     const secondImageUrl = `https://picsum.photos/600/300?random=${Date.now() + 1000}&sig=${encodeURIComponent(topic + '-secondary')}`;
     
-    // Format with headline as title, no header/footer
+    // Format with proper paragraph structure
     const formattedContent = `
 <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.7; color: #2c3e50; max-width: 800px; margin: 0 auto; padding: 20px;">
   
@@ -271,8 +268,8 @@ const Index = () => {
   </div>
   
   <div style="font-size: 17px; line-height: 1.8; color: #2d3748;">
-    ${cleanContent.split('\n\n').map(paragraph => 
-      `<p style="margin: 20px 0; text-align: justify;">${paragraph.replace(/\n/g, '<br>')}</p>`
+    ${paragraphs.map(paragraph => 
+      `<p style="margin: 20px 0; text-align: justify;">${paragraph}</p>`
     ).join('')}
   </div>
   
