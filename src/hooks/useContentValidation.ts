@@ -17,34 +17,49 @@ export const useContentValidation = () => {
     // Multiple passes of aggressive markdown cleanup
     let cleanedContent = content;
     
-    // Pass 1: Remove headers and formatting
+    // Pass 1: Remove all markdown headers and formatting
     cleanedContent = cleanedContent
-      .replace(/#{1,6}\s*/g, '')  // Remove markdown headers
+      .replace(/#{1,6}\s*/g, '')  // Remove ### ## # headers
+      .replace(/\*\*\*(.*?)\*\*\*/g, '$1')  // Remove bold+italic markdown
       .replace(/\*\*(.*?)\*\*/g, '$1')  // Remove bold markdown
       .replace(/\*(.*?)\*/g, '$1')  // Remove italic markdown
       .replace(/^\s*[-*+]\s+/gm, '• ')  // Convert markdown lists
       .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')  // Remove markdown links
-      .replace(/\*/g, '')  // Remove any remaining asterisks
-      .replace(/#/g, '')  // Remove any remaining hash symbols
       .replace(/`([^`]+)`/g, '$1')  // Remove code formatting
       .replace(/_{2,}(.*?)_{2,}/g, '$1')  // Remove underline formatting
-      .replace(/~~(.*?)~~/g, '$1');  // Remove strikethrough
+      .replace(/~~(.*?)~~/g, '$1')  // Remove strikethrough
+      .replace(/\*/g, '')  // Remove any remaining asterisks
+      .replace(/#/g, '');  // Remove any remaining hash symbols
     
-    // Pass 2: Additional cleanup
+    // Pass 2: Additional aggressive cleanup
     cleanedContent = cleanedContent
+      .replace(/\[.*?\]/g, '')  // Remove any remaining brackets
+      .replace(/\(.*?\)/g, '')  // Remove any remaining parentheses from links
+      .replace(/`/g, '')  // Remove any remaining backticks
+      .replace(/~/g, '')  // Remove any remaining tildes
+      .replace(/_/g, ' ')  // Replace underscores with spaces
       .replace(/\s+/g, ' ')  // Clean up multiple spaces
       .replace(/\n\s*\n/g, '\n\n')  // Ensure proper paragraph breaks
       .trim();
     
-    // Check for remaining markdown
+    // Pass 3: Final cleanup pass
+    cleanedContent = cleanedContent
+      .replace(/^\s*[#*-+]\s*/gm, '')  // Remove any line-starting markdown symbols
+      .replace(/[#*`~_]/g, '')  // Remove any remaining markdown symbols
+      .replace(/\s+/g, ' ')  // Final space cleanup
+      .trim();
+    
+    // Check for remaining markdown symbols
     const hasMarkdown = /[#*_`~\[\]]/g.test(cleanedContent);
     const hasDoubleAsterisks = /\*\*/g.test(cleanedContent);
     const hasHashes = /#/g.test(cleanedContent);
+    const hasBackticks = /`/g.test(cleanedContent);
     
-    if (hasMarkdown || hasDoubleAsterisks || hasHashes) {
+    if (hasMarkdown || hasDoubleAsterisks || hasHashes || hasBackticks) {
       addValidationLog(`❌ Validation failed - Found markdown symbols (Attempt ${attempt})`);
       if (hasDoubleAsterisks) addValidationLog('  - Found ** symbols');
       if (hasHashes) addValidationLog('  - Found # symbols');
+      if (hasBackticks) addValidationLog('  - Found ` symbols');
       return { isValid: false, cleanedContent };
     }
     
@@ -65,7 +80,9 @@ export const useContentValidation = () => {
       }
       
       if (attempt === 4) {
-        addValidationLog(`⚠️ Max validation attempts reached. Content may still contain markdown.`);
+        addValidationLog(`⚠️ Max validation attempts reached. Applying final cleanup.`);
+        // Final emergency cleanup
+        finalContent = finalContent.replace(/[#*_`~\[\]]/g, '');
       }
       
       // Wait a bit between attempts

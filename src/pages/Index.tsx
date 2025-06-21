@@ -103,7 +103,7 @@ const Index = () => {
       `Write a comprehensive, SEO-optimized blog post with the headline "${headline}" about the topic "${topic}". 
       
       CRITICAL FORMATTING REQUIREMENTS - FOLLOW EXACTLY:
-      - DO NOT use ANY markdown symbols: no ##, no **, no *, no - for lists, no # symbols
+      - DO NOT use ANY markdown symbols: no ###, no ##, no #, no **, no *, no - for lists
       - Use ONLY plain text with proper paragraph breaks
       - For section headers, use ALL CAPS followed by a colon (e.g., "INTRODUCTION:")
       - For emphasis, use CAPITAL LETTERS instead of bold/italic
@@ -111,6 +111,7 @@ const Index = () => {
       - Separate all paragraphs with double line breaks
       - NO ASTERISKS (*) AT ALL
       - NO HASH SYMBOLS (#) AT ALL
+      - NO MARKDOWN HEADERS (###, ##, #)
       
       SEO OPTIMIZATION REQUIREMENTS:
       - Include the main keyword "${topic}" naturally throughout the content
@@ -166,10 +167,27 @@ const Index = () => {
   };
 
   const formatForBlogger = (content: string, headline: string, topic: string, imageUrl: string) => {
+    // Clean content of any remaining markdown before formatting
+    const cleanContent = content
+      .replace(/#{1,6}\s*/g, '')  // Remove ### ## # headers
+      .replace(/\*\*(.*?)\*\*/g, '$1')  // Remove bold markdown
+      .replace(/\*(.*?)\*/g, '$1')  // Remove italic markdown
+      .replace(/`([^`]+)`/g, '$1')  // Remove code formatting
+      .replace(/\*/g, '')  // Remove any remaining asterisks
+      .replace(/#/g, '');  // Remove any remaining hash symbols
+
+    // Split content to insert second image before conclusion
+    const contentParts = cleanContent.split(/CONCLUSION:|Conclusion:|FINAL THOUGHTS:|Final Thoughts:/i);
+    const mainContent = contentParts[0] || cleanContent;
+    const conclusion = contentParts[1] || '';
+
+    // Generate second image with different seed for variety
+    const secondImageUrl = `https://picsum.photos/600/300?random=${Date.now() + 1000}&sig=${encodeURIComponent(topic + '-secondary')}`;
+    
     const formattedContent = `
 <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
   <div style="text-align: center; margin-bottom: 30px;">
-    <img src="${imageUrl}" alt="${headline}" style="width: 100%; max-width: 800px; height: 400px; object-fit: cover; border-radius: 8px; margin-bottom: 20px;">
+    <img src="${imageUrl}" alt="${headline}" style="width: 100%; max-width: 800px; height: 400px; object-fit: cover; border-radius: 8px; margin-bottom: 20px;" title="${headline}">
   </div>
   
   <div style="margin-bottom: 20px;">
@@ -177,13 +195,19 @@ const Index = () => {
   </div>
   
   <div style="font-size: 16px; line-height: 1.8;">
-    ${content.replace(/\n\n/g, '</p><p style="margin: 16px 0;">').replace(/\n/g, '<br>')}
+    ${mainContent.replace(/\n\n/g, '</p><p style="margin: 16px 0;">').replace(/\n/g, '<br>')}
   </div>
   
-  <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb; text-align: center; color: #666; font-size: 12px;">
-    <p>Generated with AI Blog Scribe</p>
-    <p>Published on: ${new Date().toLocaleDateString()}</p>
+  ${conclusion ? `
+  <div style="text-align: center; margin: 30px 0;">
+    <img src="${secondImageUrl}" alt="Supporting image for ${topic}" style="width: 100%; max-width: 600px; height: 300px; object-fit: cover; border-radius: 8px;" title="Learn more about ${topic}">
   </div>
+  
+  <div style="font-size: 16px; line-height: 1.8;">
+    <p style="margin: 16px 0;"><strong>CONCLUSION:</strong></p>
+    ${conclusion.replace(/\n\n/g, '</p><p style="margin: 16px 0;">').replace(/\n/g, '<br>')}
+  </div>
+  ` : ''}
 </div>`;
     
     return formattedContent;
@@ -380,13 +404,14 @@ const Index = () => {
                 <li>• Random scheduling: 3-4 emails per hour at human-like intervals</li>
                 <li>• Real-time validation logs for transparency</li>
                 <li>• Blogger-ready HTML formatting with no ** or ## symbols</li>
+                <li>• Multiple images optimized for Blogger thumbnails</li>
               </ul>
               <h4 className="font-semibold text-blue-800 mb-2">How it works:</h4>
               <ul className="text-sm text-blue-700 space-y-1">
                 <li>• Configure your Gemini API key and EmailJS settings</li>
                 <li>• Content goes through 4 validation passes before sending</li>
                 <li>• Random scheduling mimics human behavior patterns</li>
-                <li>• Monitor validation and automation logs in real-time</li>
+                <li>• Images include proper alt text and titles for SEO</li>
               </ul>
             </CardContent>
           </Card>
