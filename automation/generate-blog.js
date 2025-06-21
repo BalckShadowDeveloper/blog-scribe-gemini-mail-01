@@ -14,8 +14,8 @@ if (!GEMINI_API_KEY || !GMAIL_EMAIL || !GMAIL_APP_PASSWORD || !RECIPIENT_EMAIL) 
   process.exit(1);
 }
 
-// Create Gmail transporter
-const transporter = nodemailer.createTransporter({
+// Create Gmail transporter - FIXED: changed from createTransporter to createTransport
+const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
     user: GMAIL_EMAIL,
