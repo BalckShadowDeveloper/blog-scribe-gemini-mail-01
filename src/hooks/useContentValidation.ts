@@ -12,17 +12,20 @@ export const useContentValidation = () => {
   };
 
   const validateContent = (content: string, attempt: number): { isValid: boolean; cleanedContent: string } => {
-    addValidationLog(`Validation attempt ${attempt}/4 - Checking content...`);
+    addValidationLog(`Professional formatting validation attempt ${attempt}/4`);
     
-    // Multiple passes of aggressive markdown cleanup
+    // Multiple passes of aggressive cleanup for professional formatting
     let cleanedContent = content;
     
-    // Pass 1: Remove all markdown headers and formatting
+    // Pass 1: Remove all markdown and ALL CAPS section headers
     cleanedContent = cleanedContent
       .replace(/#{1,6}\s*/g, '')  // Remove ### ## # headers
       .replace(/\*\*\*(.*?)\*\*\*/g, '$1')  // Remove bold+italic markdown
       .replace(/\*\*(.*?)\*\*/g, '$1')  // Remove bold markdown
       .replace(/\*(.*?)\*/g, '$1')  // Remove italic markdown
+      // Remove ALL CAPS section headers
+      .replace(/^[A-Z\s]+:\s*/gm, '')
+      .replace(/^(INTRODUCTION|CONCLUSION|PROBLEM|SOLUTION|THE TRUTH|SECRET|METHOD|REAL RESULTS|COMMON MISTAKES):\s*/gm, '')
       .replace(/^\s*[-*+]\s+/gm, '• ')  // Convert markdown lists
       .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')  // Remove markdown links
       .replace(/`([^`]+)`/g, '$1')  // Remove code formatting
@@ -31,39 +34,41 @@ export const useContentValidation = () => {
       .replace(/\*/g, '')  // Remove any remaining asterisks
       .replace(/#/g, '');  // Remove any remaining hash symbols
     
-    // Pass 2: Additional aggressive cleanup
+    // Pass 2: Additional professional formatting cleanup
     cleanedContent = cleanedContent
       .replace(/\[.*?\]/g, '')  // Remove any remaining brackets
-      .replace(/\(.*?\)/g, '')  // Remove any remaining parentheses from links
       .replace(/`/g, '')  // Remove any remaining backticks
       .replace(/~/g, '')  // Remove any remaining tildes
       .replace(/_/g, ' ')  // Replace underscores with spaces
+      // Remove common ALL CAPS phrases that survived
+      .replace(/\b(WHY EXPERTS ARE WRONG|THE SHOCKING TRUTH|THE SECRET METHOD)\b/g, (match) => 
+        match.toLowerCase().replace(/\b\w/g, l => l.toUpperCase()))
       .replace(/\s+/g, ' ')  // Clean up multiple spaces
       .replace(/\n\s*\n/g, '\n\n')  // Ensure proper paragraph breaks
       .trim();
     
-    // Pass 3: Final cleanup pass
+    // Pass 3: Final professional formatting pass
     cleanedContent = cleanedContent
       .replace(/^\s*[#*-+]\s*/gm, '')  // Remove any line-starting markdown symbols
       .replace(/[#*`~_]/g, '')  // Remove any remaining markdown symbols
       .replace(/\s+/g, ' ')  // Final space cleanup
       .trim();
     
-    // Check for remaining markdown symbols
+    // Check for remaining formatting issues
     const hasMarkdown = /[#*_`~\[\]]/g.test(cleanedContent);
+    const hasAllCapsHeaders = /^[A-Z\s]+:/.test(cleanedContent);
     const hasDoubleAsterisks = /\*\*/g.test(cleanedContent);
     const hasHashes = /#/g.test(cleanedContent);
-    const hasBackticks = /`/g.test(cleanedContent);
     
-    if (hasMarkdown || hasDoubleAsterisks || hasHashes || hasBackticks) {
-      addValidationLog(`❌ Validation failed - Found markdown symbols (Attempt ${attempt})`);
+    if (hasMarkdown || hasAllCapsHeaders || hasDoubleAsterisks || hasHashes) {
+      addValidationLog(`❌ Professional formatting failed (Attempt ${attempt})`);
+      if (hasAllCapsHeaders) addValidationLog('  - Found ALL CAPS headers');
       if (hasDoubleAsterisks) addValidationLog('  - Found ** symbols');
       if (hasHashes) addValidationLog('  - Found # symbols');
-      if (hasBackticks) addValidationLog('  - Found ` symbols');
       return { isValid: false, cleanedContent };
     }
     
-    addValidationLog(`✅ Validation passed - Content is clean (Attempt ${attempt})`);
+    addValidationLog(`✅ Professional formatting validated (Attempt ${attempt})`);
     return { isValid: true, cleanedContent };
   };
 
@@ -75,17 +80,19 @@ export const useContentValidation = () => {
       finalContent = validation.cleanedContent;
       
       if (validation.isValid) {
-        addValidationLog(`✅ Content validation completed successfully after ${attempt} attempts`);
+        addValidationLog(`✅ Professional formatting completed after ${attempt} attempts`);
         break;
       }
       
       if (attempt === 4) {
-        addValidationLog(`⚠️ Max validation attempts reached. Applying final cleanup.`);
-        // Final emergency cleanup
-        finalContent = finalContent.replace(/[#*_`~\[\]]/g, '');
+        addValidationLog(`⚠️ Final professional formatting cleanup applied`);
+        // Final emergency cleanup for professional formatting
+        finalContent = finalContent
+          .replace(/[#*_`~\[\]]/g, '')
+          .replace(/^[A-Z\s]+:\s*/gm, '');
       }
       
-      // Wait a bit between attempts
+      // Wait between attempts
       await new Promise(resolve => setTimeout(resolve, 500));
     }
     

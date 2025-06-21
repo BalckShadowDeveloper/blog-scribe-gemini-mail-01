@@ -66,26 +66,57 @@ async function callGeminiAPI(prompt) {
   }
 }
 
-// Function to generate viral trending topics
+// Function to generate diverse viral topics
 async function generateViralTopics() {
-  console.log('Generating viral trending topics...');
-  const prompt = `Generate 3 VIRAL trending topics that would make excellent blog posts in 2024. Focus on these high-engagement niches:
-  - AI and Technology breakthroughs 
-  - Health and wellness trends
-  - Money making and side hustles
-  - Productivity and life hacks
-  - Social media and digital marketing
-  - Sustainable living and eco-friendly tips
-  - Personal development and mindset
-  - Current events with controversy
+  console.log('Generating diverse viral trending topics...');
   
-  Make them CLICKBAIT-WORTHY and trending on social media. Return only the topics as a numbered list, each topic should be 4-8 words.`;
+  // Diverse topic categories to ensure variety
+  const topicCategories = [
+    'Health and wellness breakthrough trends',
+    'Money making and passive income strategies', 
+    'Productivity and life optimization hacks',
+    'Sustainable living and eco-friendly innovations',
+    'Personal development and mindset shifts',
+    'Social media marketing secrets',
+    'Technology breakthroughs (non-AI)',
+    'Fitness and nutrition discoveries',
+    'Investment and financial freedom',
+    'Side hustles and entrepreneurship',
+    'Home improvement and DIY solutions',
+    'Travel hacks and budget adventures',
+    'Relationship and dating advice',
+    'Career advancement strategies',
+    'Fashion and style trends'
+  ];
+  
+  const randomCategory = topicCategories[Math.floor(Math.random() * topicCategories.length)];
+  console.log(`Selected category: ${randomCategory}`);
+  
+  const prompt = `Generate 3 VIRAL trending topics specifically about "${randomCategory}". 
+  
+  IMPORTANT RULES:
+  - Do NOT mention AI, artificial intelligence, or machine learning
+  - Focus specifically on: ${randomCategory}
+  - Each topic should be 4-8 words maximum
+  - Make them clickbait-worthy and trending on social media
+  - Topics should be something people actively search for in 2024
+  
+  Examples of good diverse topics:
+  - "Intermittent Fasting Weight Loss Hack"
+  - "Passive Income Real Estate Strategy" 
+  - "Morning Routine Productivity Boost"
+  - "Zero Waste Lifestyle Benefits"
+  - "Mediterranean Diet Heart Health"
+  - "Side Hustle Dropshipping Success"
+  
+  Return only the topics as a numbered list, no explanations.`;
   
   const response = await callGeminiAPI(prompt);
   const topics = response.split('\n')
     .filter(topic => topic.trim())
-    .map(topic => topic.replace(/^\d+\.\s*/, '').trim());
+    .map(topic => topic.replace(/^\d+\.\s*/, '').trim().replace(/['"]/g, ''));
   
+  console.log('Generated diverse topics:', topics);
   return topics;
 }
 
@@ -113,57 +144,52 @@ async function generateViralHeadlines(topic) {
   const response = await callGeminiAPI(prompt);
   const headlines = response.split('\n')
     .filter(headline => headline.trim())
-    .map(headline => headline.replace(/^\d+\.\s*/, '').trim());
+    .map(headline => headline.replace(/^\d+\.\s*/, '').trim().replace(/['"]/g, ''));
   
   return headlines;
 }
 
-// Function to generate viral blog post
+// Function to generate professionally formatted viral blog post
 async function generateViralBlogPost(headline, topic) {
-  console.log(`Generating viral blog post for headline: ${headline}`);
+  console.log(`Generating professionally formatted blog post for: ${headline}`);
   const prompt = `Write a VIRAL, comprehensive blog post with the headline "${headline}" about "${topic}".
   
-  CRITICAL FORMATTING - NO MARKDOWN ALLOWED:
-  - DO NOT use ### ## # symbols AT ALL
-  - DO NOT use ** or * for bold/italic
-  - DO NOT use - or * for lists
-  - Use ONLY plain text with proper spacing
-  - For headers: Use ALL CAPS followed by colon (INTRODUCTION:)
-  - For emphasis: Use CAPITAL LETTERS
-  - For lists: Use numbers (1. 2. 3.) or bullet points (•)
-  - Double line breaks between paragraphs
+  CRITICAL FORMATTING REQUIREMENTS:
+  - NO markdown symbols (# * _ \` ~) AT ALL
+  - Use natural paragraph breaks and proper sentence flow
+  - Write section headers as normal sentences, not ALL CAPS
+  - Use conversational, engaging tone throughout
+  - NO "INTRODUCTION:" or "CONCLUSION:" labels
+  - Make it flow like a natural article
   
-  VIRAL SEO STRUCTURE (1000-1200 words):
+  STRUCTURE (1000-1200 words):
   
-  HOOK OPENING: Start with shocking statistic or controversial statement about ${topic}
+  Start with a compelling hook about ${topic} that grabs attention immediately.
   
-  PROBLEM IDENTIFICATION: Explain why this matters NOW and why people are searching for this
+  Then naturally flow into explaining why this matters now and why people need to know about ${topic}.
   
-  MAIN SECTIONS (use varied section headers):
-  - THE SHOCKING TRUTH ABOUT [subtopic]:
-  - WHY EXPERTS ARE WRONG ABOUT [subtopic]:
-  - THE SECRET METHOD THAT WORKS:
-  - REAL RESULTS FROM REAL PEOPLE:
-  - COMMON MISTAKES TO AVOID:
+  Create 4-5 natural sections that cover:
+  - The surprising truth most people don't know
+  - Why conventional wisdom is wrong
+  - The proven method that actually works
+  - Real examples and success stories
+  - Common mistakes to avoid
   
   Include throughout:
   - Exact keyword "${topic}" 8-12 times naturally
-  - Related long-tail keywords
-  - Questions people actually search for
-  - Statistics and data points
+  - Specific statistics and data points
   - Personal stories or case studies
-  - Controversy or contrarian viewpoints
-  - Practical action steps
-  - Social proof and testimonials
+  - Actionable steps readers can take
+  - Controversial or contrarian viewpoints
   
-  CONCLUSION: Strong call-to-action encouraging sharing and engagement
+  End with a strong call-to-action encouraging engagement.
   
-  Write in conversational, engaging tone. Make it shareable and comment-worthy.
-  REMEMBER: ABSOLUTELY NO # OR * SYMBOLS - PLAIN TEXT ONLY!`;
+  Write in a natural, conversational style. NO section labels or ALL CAPS headers.
+  Make every paragraph flow naturally into the next.`;
   
   const response = await callGeminiAPI(prompt);
   
-  // AGGRESSIVE markdown removal
+  // AGGRESSIVE formatting cleanup - remove ALL markdown and ALL CAPS sections
   let cleanContent = response
     // Remove ALL hash symbols and everything after them on the same line
     .replace(/#{1,6}.*$/gm, '')
@@ -174,6 +200,10 @@ async function generateViralBlogPost(headline, topic) {
     // Remove all asterisk formatting
     .replace(/\*{1,3}(.*?)\*{1,3}/g, '$1')
     .replace(/\*/g, '')
+    // Remove ALL CAPS section headers like "INTRODUCTION:", "CONCLUSION:", etc.
+    .replace(/^[A-Z\s]+:\s*/gm, '')
+    // Remove common ALL CAPS words at start of paragraphs
+    .replace(/^(INTRODUCTION|CONCLUSION|PROBLEM|SOLUTION|THE TRUTH|SECRET|METHOD):\s*/gm, '')
     // Remove any remaining markdown
     .replace(/`([^`]+)`/g, '$1')
     .replace(/_{2,}(.*?)_{2,}/g, '$1')
@@ -183,14 +213,14 @@ async function generateViralBlogPost(headline, topic) {
     .replace(/\n\s*\n/g, '\n\n')
     .trim();
 
-  // Additional pass to ensure no markdown survives
+  // Additional pass to ensure no markdown or formatting survives
   cleanContent = cleanContent
     .split('\n')
     .map(line => line.replace(/^[#*-+]\s*/, '').trim())
     .filter(line => line.length > 0)
     .join('\n\n');
   
-  console.log('Content cleaned of ALL markdown symbols');
+  console.log('Content professionally formatted and cleaned');
   return cleanContent;
 }
 
@@ -203,7 +233,7 @@ async function sendEmail(subject, content, topic) {
     throw new Error('Gmail SMTP connection failed');
   }
   
-  console.log('Sending viral email via Gmail...');
+  console.log('Sending professionally formatted email via Gmail...');
   console.log('From:', GMAIL_EMAIL);
   console.log('To:', RECIPIENT_EMAIL);
   console.log('Subject:', subject);
@@ -249,12 +279,12 @@ async function sendEmail(subject, content, topic) {
 
   try {
     const info = await transporter.sendMail(mailOptions);
-    console.log('Viral email sent successfully via Gmail!');
+    console.log('Professionally formatted email sent successfully via Gmail!');
     console.log('Message ID:', info.messageId);
     console.log('Response:', info.response);
     return true;
   } catch (error) {
-    console.error('Detailed error sending viral email via Gmail:', {
+    console.error('Detailed error sending email via Gmail:', {
       message: error.message,
       code: error.code,
       command: error.command,
@@ -265,18 +295,18 @@ async function sendEmail(subject, content, topic) {
   }
 }
 
-// Main viral automation function
+// Main automation function with diversity focus
 async function runViralAutomation() {
   try {
-    console.log('Starting AI Blog Scribe VIRAL automation...');
+    console.log('Starting AI Blog Scribe DIVERSE viral automation...');
     console.log('Timestamp:', new Date().toISOString());
     
-    // Step 1: Generate viral trending topics
+    // Step 1: Generate diverse viral trending topics
     const topics = await generateViralTopics();
-    console.log('Generated viral topics:', topics);
+    console.log('Generated diverse viral topics:', topics);
     
     if (topics.length === 0) {
-      throw new Error('No viral topics generated');
+      throw new Error('No diverse viral topics generated');
     }
     
     // Step 2: Select first topic and generate viral headlines
@@ -288,25 +318,26 @@ async function runViralAutomation() {
       throw new Error('No viral headlines generated');
     }
     
-    // Step 3: Select first headline and generate viral blog post
+    // Step 3: Select first headline and generate professionally formatted blog post
     const selectedHeadline = headlines[0];
     const blogPost = await generateViralBlogPost(selectedHeadline, selectedTopic);
-    console.log('Generated viral blog post length:', blogPost.length, 'characters');
+    console.log('Generated professionally formatted blog post length:', blogPost.length, 'characters');
     console.log('First 200 chars preview:', blogPost.substring(0, 200));
     
-    // Step 4: Send viral email
+    // Step 4: Send professionally formatted email
     await sendEmail(selectedHeadline, blogPost, selectedTopic);
     
-    console.log('VIRAL automation completed successfully!');
+    console.log('DIVERSE viral automation completed successfully!');
+    console.log('Topic Category: DIVERSE (not AI-focused)');
     console.log('Topic:', selectedTopic);
     console.log('Headline:', selectedHeadline);
     console.log('Sent to:', RECIPIENT_EMAIL);
     
   } catch (error) {
-    console.error('Viral automation failed:', error);
+    console.error('Diverse viral automation failed:', error);
     process.exit(1);
   }
 }
 
-// Run the viral automation
+// Run the diverse viral automation
 runViralAutomation();

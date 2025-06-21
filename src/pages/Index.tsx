@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import emailjs from '@emailjs/browser';
@@ -79,22 +78,52 @@ const Index = () => {
   };
 
   const generateTrendingTopic = async () => {
-    addLog('Generating viral trending topic...');
+    addLog('Generating diverse viral trending topic...');
+    
+    // Rotate through different topic categories to ensure diversity
+    const topicCategories = [
+      'Health and wellness breakthrough trends',
+      'Money making and passive income strategies', 
+      'Productivity and life optimization hacks',
+      'Sustainable living and eco-friendly innovations',
+      'Personal development and mindset shifts',
+      'Social media marketing secrets',
+      'Technology breakthroughs (non-AI)',
+      'Fitness and nutrition discoveries',
+      'Investment and financial freedom',
+      'Side hustles and entrepreneurship',
+      'Home improvement and DIY solutions',
+      'Travel hacks and budget adventures',
+      'Relationship and dating advice',
+      'Career advancement strategies',
+      'Fashion and style trends'
+    ];
+    
+    const randomCategory = topicCategories[Math.floor(Math.random() * topicCategories.length)];
+    
     const topicsText = await callGeminiAPI(
-      `Generate 1 VIRAL trending topic that would make an excellent blog post in 2024. Focus on these high-engagement niches:
-      - AI and Technology breakthroughs 
-      - Health and wellness trends
-      - Money making and side hustles
-      - Productivity and life hacks
-      - Social media and digital marketing
-      - Sustainable living and eco-friendly tips
-      - Personal development and mindset
-      - Current events with controversy
+      `Generate 1 VIRAL trending topic specifically about "${randomCategory}". 
       
-      Make it CLICKBAIT-WORTHY and trending on social media. Return only the topic, 4-8 words maximum.`
+      IMPORTANT: Do NOT mention AI, artificial intelligence, or machine learning at all.
+      Focus specifically on the category: ${randomCategory}
+      
+      Make it:
+      - 4-8 words maximum
+      - Clickbait-worthy and trending on social media
+      - Specific to the ${randomCategory} niche
+      - Something people are actively searching for in 2024
+      
+      Examples of good topics:
+      - "Intermittent Fasting Weight Loss Hack"
+      - "Passive Income Real Estate Strategy" 
+      - "Morning Routine Productivity Boost"
+      - "Zero Waste Lifestyle Benefits"
+      
+      Return only the topic, nothing else.`
     );
-    const topic = topicsText.trim().replace(/^\d+\.\s*/, '');
-    addLog(`Generated viral topic: ${topic}`);
+    
+    const topic = topicsText.trim().replace(/^\d+\.\s*/, '').replace(/['"]/g, '');
+    addLog(`Generated diverse topic: ${topic} (Category: ${randomCategory})`);
     return topic;
   };
 
@@ -125,53 +154,49 @@ const Index = () => {
   };
 
   const generateBlogPost = async (headline: string, topic: string) => {
-    addLog('Generating viral SEO-optimized blog post...');
+    addLog('Generating professionally formatted blog post...');
     const blogContent = await callGeminiAPI(
       `Write a VIRAL, comprehensive blog post with the headline "${headline}" about "${topic}".
       
-      CRITICAL FORMATTING - NO MARKDOWN ALLOWED:
-      - DO NOT use ### ## # symbols AT ALL
-      - DO NOT use ** or * for bold/italic
-      - DO NOT use - or * for lists
-      - Use ONLY plain text with proper spacing
-      - For headers: Use ALL CAPS followed by colon (INTRODUCTION:)
-      - For emphasis: Use CAPITAL LETTERS
-      - For lists: Use numbers (1. 2. 3.) or bullet points (•)
-      - Double line breaks between paragraphs
+      CRITICAL FORMATTING REQUIREMENTS:
+      - NO markdown symbols (# * _ ` ~) AT ALL
+      - Use natural paragraph breaks and proper sentence flow
+      - Write section headers as normal sentences, not ALL CAPS
+      - Use conversational, engaging tone throughout
+      - NO "INTRODUCTION:" or "CONCLUSION:" labels
+      - Make it flow like a natural article
       
-      VIRAL SEO STRUCTURE (1000-1200 words):
+      STRUCTURE (1000-1200 words):
       
-      HOOK OPENING: Start with shocking statistic or controversial statement about ${topic}
+      Start with a compelling hook about ${topic} that grabs attention immediately.
       
-      PROBLEM IDENTIFICATION: Explain why this matters NOW and why people are searching for this
+      Then naturally flow into explaining why this matters now and why people need to know about ${topic}.
       
-      MAIN SECTIONS (use varied section headers):
-      - THE SHOCKING TRUTH ABOUT [subtopic]:
-      - WHY EXPERTS ARE WRONG ABOUT [subtopic]:
-      - THE SECRET METHOD THAT WORKS:
-      - REAL RESULTS FROM REAL PEOPLE:
-      - COMMON MISTAKES TO AVOID:
+      Create 4-5 natural sections that cover:
+      - The surprising truth most people don't know
+      - Why conventional wisdom is wrong
+      - The proven method that actually works
+      - Real examples and success stories
+      - Common mistakes to avoid
       
       Include throughout:
       - Exact keyword "${topic}" 8-12 times naturally
-      - Related long-tail keywords
-      - Questions people actually search for
-      - Statistics and data points
+      - Specific statistics and data points
       - Personal stories or case studies
-      - Controversy or contrarian viewpoints
-      - Practical action steps
-      - Social proof and testimonials
+      - Actionable steps readers can take
+      - Controversial or contrarian viewpoints
       
-      CONCLUSION: Strong call-to-action encouraging sharing and engagement
+      End with a strong call-to-action encouraging engagement.
       
-      Write in conversational, engaging tone. Make it shareable and comment-worthy.
-      REMEMBER: ABSOLUTELY NO # OR * SYMBOLS - PLAIN TEXT ONLY!`
+      Write in a natural, conversational style. NO section labels or ALL CAPS headers.
+      Make every paragraph flow naturally into the next.
+      `
     );
     
     addLog('Running enhanced content validation...');
     const validatedContent = await performMultipleValidations(blogContent);
     
-    addLog(`Generated viral blog post (${validatedContent.length} characters)`);
+    addLog(`Generated professionally formatted blog post (${validatedContent.length} characters)`);
     return validatedContent;
   };
 
@@ -408,7 +433,7 @@ const Index = () => {
             AI Blog Scribe - Viral Content Generator
           </h1>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Generate viral, trending blog posts with advanced SEO optimization and zero markdown formatting
+            Generate diverse viral blog posts across all trending niches with professional formatting
           </p>
         </div>
 
@@ -449,20 +474,20 @@ const Index = () => {
         <div className="max-w-2xl mx-auto mt-8">
           <Card className="border-blue-200 bg-blue-50">
             <CardContent className="p-4">
-              <h4 className="font-semibold text-blue-800 mb-2">Viral Content Features:</h4>
+              <h4 className="font-semibold text-blue-800 mb-2">Enhanced Features:</h4>
               <ul className="text-sm text-blue-700 space-y-1 mb-4">
-                <li>• Aggressive markdown removal - NO # or * symbols survive</li>
+                <li>• Professional formatting - NO ALL CAPS headers</li>
+                <li>• Diverse topic generation across 15+ niches</li>
+                <li>• Natural article flow without section labels</li>
                 <li>• Viral headline generation using proven formulas</li>
-                <li>• Trending topic detection for maximum engagement</li>
-                <li>• Clean HTML output with headline as title</li>
-                <li>• SEO-optimized content structure for search visibility</li>
+                <li>• Complete markdown removal for clean output</li>
               </ul>
-              <h4 className="font-semibold text-blue-800 mb-2">How it works:</h4>
+              <h4 className="font-semibold text-blue-800 mb-2">Topic Categories:</h4>
               <ul className="text-sm text-blue-700 space-y-1">
-                <li>• Generates trending topics from viral niches</li>
-                <li>• Creates clickbait headlines using proven formulas</li>
-                <li>• Multiple validation passes ensure zero markdown</li>
-                <li>• Clean email format with headline as title (no header/footer)</li>
+                <li>• Health, Fitness & Wellness • Money & Investing</li>
+                <li>• Productivity & Life Hacks • Sustainable Living</li>
+                <li>• Personal Development • Social Media Marketing</li>
+                <li>• Technology & Innovation • Career & Business</li>
               </ul>
             </CardContent>
           </Card>
