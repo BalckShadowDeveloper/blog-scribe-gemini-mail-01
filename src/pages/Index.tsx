@@ -159,7 +159,7 @@ const Index = () => {
       `Write a VIRAL, comprehensive blog post with the headline "${headline}" about "${topic}".
       
       CRITICAL FORMATTING REQUIREMENTS:
-      - NO markdown symbols (# * _ ` ~) AT ALL
+      - NO markdown symbols like hash, asterisk, underscore, backtick, or tilde AT ALL
       - Use natural paragraph breaks and proper sentence flow
       - Write section headers as normal sentences, not ALL CAPS
       - Use conversational, engaging tone throughout
