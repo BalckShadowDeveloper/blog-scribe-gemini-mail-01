@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import emailjs from '@emailjs/browser';
@@ -78,67 +79,99 @@ const Index = () => {
   };
 
   const generateTrendingTopic = async () => {
-    addLog('Generating trending topic...');
+    addLog('Generating viral trending topic...');
     const topicsText = await callGeminiAPI(
-      "Generate 1 trending topic that would make an excellent blog post in 2024. Focus on technology, lifestyle, business, health, or current events. Return only the topic, 3-8 words maximum."
+      `Generate 1 VIRAL trending topic that would make an excellent blog post in 2024. Focus on these high-engagement niches:
+      - AI and Technology breakthroughs 
+      - Health and wellness trends
+      - Money making and side hustles
+      - Productivity and life hacks
+      - Social media and digital marketing
+      - Sustainable living and eco-friendly tips
+      - Personal development and mindset
+      - Current events with controversy
+      
+      Make it CLICKBAIT-WORTHY and trending on social media. Return only the topic, 4-8 words maximum.`
     );
     const topic = topicsText.trim().replace(/^\d+\.\s*/, '');
-    addLog(`Generated topic: ${topic}`);
+    addLog(`Generated viral topic: ${topic}`);
     return topic;
   };
 
   const generateHeadline = async (topic: string) => {
-    addLog('Generating headline...');
+    addLog('Generating viral headline...');
     const headlineText = await callGeminiAPI(
-      `Generate 1 engaging, clickable headline for a blog post about "${topic}". Make it attention-grabbing, SEO-friendly, and around 60 characters or less. Return only the headline.`
+      `Generate 1 VIRAL, clickbait headline for a blog post about "${topic}". 
+      
+      Use these PROVEN viral headline formulas:
+      - "This [Topic] Trick Will Change Your Life in 30 Days"
+      - "Why Everyone is Talking About [Topic] (And You Should Too)"
+      - "The [Topic] Secret That [Experts/Celebrities] Don't Want You to Know"
+      - "I Tried [Topic] for 30 Days - Here's What Happened"
+      - "[Number] [Topic] Hacks That Will Blow Your Mind"
+      - "The Shocking Truth About [Topic] That Nobody Talks About"
+      
+      Make it:
+      - Under 60 characters for SEO
+      - Include power words: Secret, Shocking, Ultimate, Proven, Exclusive
+      - Create curiosity gap
+      - Promise transformation or revelation
+      
+      Return only the headline.`
     );
     const headline = headlineText.trim().replace(/^\d+\.\s*/, '');
-    addLog(`Generated headline: ${headline}`);
+    addLog(`Generated viral headline: ${headline}`);
     return headline;
   };
 
   const generateBlogPost = async (headline: string, topic: string) => {
-    addLog('Generating SEO-optimized blog post...');
+    addLog('Generating viral SEO-optimized blog post...');
     const blogContent = await callGeminiAPI(
-      `Write a comprehensive, SEO-optimized blog post with the headline "${headline}" about the topic "${topic}". 
+      `Write a VIRAL, comprehensive blog post with the headline "${headline}" about "${topic}".
       
-      CRITICAL FORMATTING REQUIREMENTS - FOLLOW EXACTLY:
-      - DO NOT use ANY markdown symbols: no ###, no ##, no #, no **, no *, no - for lists
-      - Use ONLY plain text with proper paragraph breaks
-      - For section headers, use ALL CAPS followed by a colon (e.g., "INTRODUCTION:")
-      - For emphasis, use CAPITAL LETTERS instead of bold/italic
-      - For lists, use numbered format (1. 2. 3.) or simple bullet points with •
-      - Separate all paragraphs with double line breaks
-      - NO ASTERISKS (*) AT ALL
-      - NO HASH SYMBOLS (#) AT ALL
-      - NO MARKDOWN HEADERS (###, ##, #)
+      CRITICAL FORMATTING - NO MARKDOWN ALLOWED:
+      - DO NOT use ### ## # symbols AT ALL
+      - DO NOT use ** or * for bold/italic
+      - DO NOT use - or * for lists
+      - Use ONLY plain text with proper spacing
+      - For headers: Use ALL CAPS followed by colon (INTRODUCTION:)
+      - For emphasis: Use CAPITAL LETTERS
+      - For lists: Use numbers (1. 2. 3.) or bullet points (•)
+      - Double line breaks between paragraphs
       
-      SEO OPTIMIZATION REQUIREMENTS:
-      - Include the main keyword "${topic}" naturally throughout the content
-      - Use related keywords and synonyms
-      - Write meta-description worthy opening paragraph (150-160 characters)
-      - Include long-tail keywords related to ${topic}
-      - Structure content for featured snippets
-      - Use question-based subheadings that people search for
+      VIRAL SEO STRUCTURE (1000-1200 words):
       
-      CONTENT STRUCTURE (800-1000 words):
-      - Engaging hook in first paragraph mentioning ${topic}
-      - Include statistics or facts when relevant
-      - 3-4 main sections answering common questions about ${topic}
-      - Practical tips or actionable advice
-      - Compelling conclusion with call-to-action
-      - Professional yet conversational tone
-      - Ready for direct publishing on Blogger platform
+      HOOK OPENING: Start with shocking statistic or controversial statement about ${topic}
       
-      REMEMBER: ABSOLUTELY NO MARKDOWN FORMATTING - PLAIN TEXT ONLY!`
+      PROBLEM IDENTIFICATION: Explain why this matters NOW and why people are searching for this
+      
+      MAIN SECTIONS (use varied section headers):
+      - THE SHOCKING TRUTH ABOUT [subtopic]:
+      - WHY EXPERTS ARE WRONG ABOUT [subtopic]:
+      - THE SECRET METHOD THAT WORKS:
+      - REAL RESULTS FROM REAL PEOPLE:
+      - COMMON MISTAKES TO AVOID:
+      
+      Include throughout:
+      - Exact keyword "${topic}" 8-12 times naturally
+      - Related long-tail keywords
+      - Questions people actually search for
+      - Statistics and data points
+      - Personal stories or case studies
+      - Controversy or contrarian viewpoints
+      - Practical action steps
+      - Social proof and testimonials
+      
+      CONCLUSION: Strong call-to-action encouraging sharing and engagement
+      
+      Write in conversational, engaging tone. Make it shareable and comment-worthy.
+      REMEMBER: ABSOLUTELY NO # OR * SYMBOLS - PLAIN TEXT ONLY!`
     );
     
-    addLog('Running multiple content validation passes...');
+    addLog('Running enhanced content validation...');
     const validatedContent = await performMultipleValidations(blogContent);
     
-    addLog(`Generated and validated blog post (${validatedContent.length} characters)`);
-    console.log('Content after validation preview:', validatedContent.substring(0, 200) + '...');
-    
+    addLog(`Generated viral blog post (${validatedContent.length} characters)`);
     return validatedContent;
   };
 
@@ -167,47 +200,65 @@ const Index = () => {
   };
 
   const formatForBlogger = (content: string, headline: string, topic: string, imageUrl: string) => {
-    // Clean content of any remaining markdown before formatting
-    const cleanContent = content
-      .replace(/#{1,6}\s*/g, '')  // Remove ### ## # headers
-      .replace(/\*\*(.*?)\*\*/g, '$1')  // Remove bold markdown
-      .replace(/\*(.*?)\*/g, '$1')  // Remove italic markdown
-      .replace(/`([^`]+)`/g, '$1')  // Remove code formatting
-      .replace(/\*/g, '')  // Remove any remaining asterisks
-      .replace(/#/g, '');  // Remove any remaining hash symbols
+    // AGGRESSIVE markdown removal - remove ALL instances
+    let cleanContent = content
+      // Remove ALL hash symbols and everything after them on the same line
+      .replace(/#{1,6}.*$/gm, '')
+      // Remove numbered headers like "### 1. Title"
+      .replace(/#{1,6}\s*\d+\.\s*.*$/gm, '')
+      // Remove any remaining hash symbols
+      .replace(/#/g, '')
+      // Remove all asterisk formatting
+      .replace(/\*{1,3}(.*?)\*{1,3}/g, '$1')
+      .replace(/\*/g, '')
+      // Remove any remaining markdown
+      .replace(/`([^`]+)`/g, '$1')
+      .replace(/_{2,}(.*?)_{2,}/g, '$1')
+      .replace(/~~(.*?)~~/g, '$1')
+      // Clean up extra spaces and line breaks
+      .replace(/\s+/g, ' ')
+      .replace(/\n\s*\n/g, '\n\n')
+      .trim();
 
-    // Split content to insert second image before conclusion
-    const contentParts = cleanContent.split(/CONCLUSION:|Conclusion:|FINAL THOUGHTS:|Final Thoughts:/i);
-    const mainContent = contentParts[0] || cleanContent;
-    const conclusion = contentParts[1] || '';
+    // Additional pass to ensure no markdown survives
+    cleanContent = cleanContent
+      .split('\n')
+      .map(line => line.replace(/^[#*-+]\s*/, '').trim())
+      .filter(line => line.length > 0)
+      .join('\n\n');
 
-    // Generate second image with different seed for variety
+    // Generate second image for variety
     const secondImageUrl = `https://picsum.photos/600/300?random=${Date.now() + 1000}&sig=${encodeURIComponent(topic + '-secondary')}`;
     
+    // Format with headline as title, no header/footer
     const formattedContent = `
-<div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+<div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.7; color: #2c3e50; max-width: 800px; margin: 0 auto; padding: 20px;">
+  
+  <h1 style="font-size: 32px; font-weight: bold; color: #1a202c; margin-bottom: 10px; line-height: 1.2;">${headline}</h1>
+  
+  <div style="margin-bottom: 25px;">
+    <span style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px;">${topic}</span>
+    <span style="margin-left: 15px; color: #718096; font-size: 14px;">${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+  </div>
+  
   <div style="text-align: center; margin-bottom: 30px;">
-    <img src="${imageUrl}" alt="${headline}" style="width: 100%; max-width: 800px; height: 400px; object-fit: cover; border-radius: 8px; margin-bottom: 20px;" title="${headline}">
+    <img src="${imageUrl}" alt="${headline}" style="width: 100%; max-width: 800px; height: 400px; object-fit: cover; border-radius: 12px; box-shadow: 0 8px 32px rgba(0,0,0,0.1);" title="${headline}">
   </div>
   
-  <div style="margin-bottom: 20px;">
-    <span style="background: #f0f0f0; padding: 4px 8px; border-radius: 4px; font-size: 12px; color: #666;">${topic}</span>
+  <div style="font-size: 17px; line-height: 1.8; color: #2d3748;">
+    ${cleanContent.split('\n\n').map(paragraph => 
+      `<p style="margin: 20px 0; text-align: justify;">${paragraph.replace(/\n/g, '<br>')}</p>`
+    ).join('')}
   </div>
   
-  <div style="font-size: 16px; line-height: 1.8;">
-    ${mainContent.replace(/\n\n/g, '</p><p style="margin: 16px 0;">').replace(/\n/g, '<br>')}
+  <div style="text-align: center; margin: 40px 0;">
+    <img src="${secondImageUrl}" alt="Supporting visual for ${topic}" style="width: 100%; max-width: 600px; height: 300px; object-fit: cover; border-radius: 12px; box-shadow: 0 6px 24px rgba(0,0,0,0.1);" title="Learn more about ${topic}">
   </div>
   
-  ${conclusion ? `
-  <div style="text-align: center; margin: 30px 0;">
-    <img src="${secondImageUrl}" alt="Supporting image for ${topic}" style="width: 100%; max-width: 600px; height: 300px; object-fit: cover; border-radius: 8px;" title="Learn more about ${topic}">
+  <div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); padding: 20px; border-radius: 12px; margin: 30px 0; text-align: center;">
+    <p style="color: white; font-size: 16px; font-weight: 500; margin: 0;">💡 Found this helpful? Share it with your friends and let us know what you think in the comments!</p>
   </div>
   
-  <div style="font-size: 16px; line-height: 1.8;">
-    <p style="margin: 16px 0;"><strong>CONCLUSION:</strong></p>
-    ${conclusion.replace(/\n\n/g, '</p><p style="margin: 16px 0;">').replace(/\n/g, '<br>')}
-  </div>
-  ` : ''}
 </div>`;
     
     return formattedContent;
@@ -354,10 +405,10 @@ const Index = () => {
       <div className="container mx-auto px-4 py-8">
         <div className="text-center mb-8">
           <h1 className="text-5xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent mb-4">
-            AI Blog Scribe - Full Automation
+            AI Blog Scribe - Viral Content Generator
           </h1>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Fully automated blog generation with random human-like scheduling and content validation
+            Generate viral, trending blog posts with advanced SEO optimization and zero markdown formatting
           </p>
         </div>
 
@@ -398,20 +449,20 @@ const Index = () => {
         <div className="max-w-2xl mx-auto mt-8">
           <Card className="border-blue-200 bg-blue-50">
             <CardContent className="p-4">
-              <h4 className="font-semibold text-blue-800 mb-2">Enhanced Features:</h4>
+              <h4 className="font-semibold text-blue-800 mb-2">Viral Content Features:</h4>
               <ul className="text-sm text-blue-700 space-y-1 mb-4">
-                <li>• 4-step content validation to eliminate ALL markdown formatting</li>
-                <li>• Random scheduling: 3-4 emails per hour at human-like intervals</li>
-                <li>• Real-time validation logs for transparency</li>
-                <li>• Blogger-ready HTML formatting with no ** or ## symbols</li>
-                <li>• Multiple images optimized for Blogger thumbnails</li>
+                <li>• Aggressive markdown removal - NO # or * symbols survive</li>
+                <li>• Viral headline generation using proven formulas</li>
+                <li>• Trending topic detection for maximum engagement</li>
+                <li>• Clean HTML output with headline as title</li>
+                <li>• SEO-optimized content structure for search visibility</li>
               </ul>
               <h4 className="font-semibold text-blue-800 mb-2">How it works:</h4>
               <ul className="text-sm text-blue-700 space-y-1">
-                <li>• Configure your Gemini API key and EmailJS settings</li>
-                <li>• Content goes through 4 validation passes before sending</li>
-                <li>• Random scheduling mimics human behavior patterns</li>
-                <li>• Images include proper alt text and titles for SEO</li>
+                <li>• Generates trending topics from viral niches</li>
+                <li>• Creates clickbait headlines using proven formulas</li>
+                <li>• Multiple validation passes ensure zero markdown</li>
+                <li>• Clean email format with headline as title (no header/footer)</li>
               </ul>
             </CardContent>
           </Card>

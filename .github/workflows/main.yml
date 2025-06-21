@@ -1,20 +1,19 @@
 
-
-name: Auto Blog Generator
+name: Viral Blog Generator
 
 on:
   schedule:
-    # Run every 5 minutes for testing (change back to desired frequency later)
-    - cron: '*/5 * * * *'
+    # Run every 2 hours for more frequent viral content
+    - cron: '0 */2 * * *'
   workflow_dispatch: # Allow manual trigger
 
 jobs:
-  generate-blog:
+  generate-viral-blog:
     runs-on: ubuntu-latest
     
     steps:
-    - name: Checkpoint - Starting workflow
-      run: echo "Starting AI Blog Scribe automation at $(date)"
+    - name: Checkpoint - Starting viral blog workflow
+      run: echo "Starting AI Blog Scribe viral content generation at $(date)"
       
     - name: Checkout repository
       uses: actions/checkout@v4
@@ -29,7 +28,7 @@ jobs:
     - name: Install dependencies
       working-directory: ./automation
       run: |
-        echo "Installing dependencies..."
+        echo "Installing dependencies for viral content generation..."
         npm install
         echo "Dependencies installed successfully"
         
@@ -40,16 +39,16 @@ jobs:
         GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
         RECIPIENT_EMAIL: ${{ secrets.RECIPIENT_EMAIL }}
       run: |
-        echo "Checking environment variables..."
+        echo "Checking viral blog environment variables..."
         if [ -z "$GEMINI_API_KEY" ]; then echo "ERROR: GEMINI_API_KEY is not set"; exit 1; fi
         if [ -z "$GMAIL_EMAIL" ]; then echo "ERROR: GMAIL_EMAIL is not set"; exit 1; fi
         if [ -z "$GMAIL_APP_PASSWORD" ]; then echo "ERROR: GMAIL_APP_PASSWORD is not set"; exit 1; fi
         if [ -z "$RECIPIENT_EMAIL" ]; then echo "ERROR: RECIPIENT_EMAIL is not set"; exit 1; fi
-        echo "All environment variables are set"
+        echo "All environment variables are set for viral content"
         echo "Gmail Email: $GMAIL_EMAIL"
         echo "Recipient Email: $RECIPIENT_EMAIL"
         
-    - name: Generate and send blog post
+    - name: Generate and send viral blog post
       working-directory: ./automation
       env:
         GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
@@ -57,10 +56,9 @@ jobs:
         GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
         RECIPIENT_EMAIL: ${{ secrets.RECIPIENT_EMAIL }}
       run: |
-        echo "Starting blog generation process..."
+        echo "Starting viral blog generation process..."
         node generate-blog.js
-        echo "Blog generation process completed"
+        echo "Viral blog generation process completed"
 
-    - name: Log completion
-      run: echo "Blog generation completed successfully at $(date)"
-
+    - name: Log viral content completion
+      run: echo "Viral blog generation completed successfully at $(date)"
