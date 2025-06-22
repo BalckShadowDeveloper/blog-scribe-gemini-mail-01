@@ -27,11 +27,11 @@ export class EnhancedEmailService {
   }
 
   private formatForBlogger(content: string, headline: string, topic: string, imageUrl: string): string {
-    // First, process the content to ensure proper paragraph structure
-    const processedContent = this.processContentStructure(content);
+    // Process content to ensure proper structure before converting to HTML
+    const structuredContent = this.ensureProperContentStructure(content);
     
-    // Then convert to HTML
-    const htmlContent = parseMarkdown(processedContent);
+    // Convert to HTML
+    const htmlContent = parseMarkdown(structuredContent);
     const secondImageUrl = `https://picsum.photos/600/300?random=${Date.now() + 1000}&sig=${encodeURIComponent(topic + '-secondary')}`;
     
     return `
@@ -103,50 +103,62 @@ export class EnhancedEmailService {
 </style>`;
   }
 
-  private processContentStructure(content: string): string {
-    // Split content by double line breaks to identify paragraphs
-    const sections = content.split('\n\n');
+  private ensureProperContentStructure(content: string): string {
+    console.log('Input content length:', content.length);
+    console.log('First 300 chars:', content.substring(0, 300));
+    
+    // Split by double newlines to get sections
+    const sections = content.split('\n\n').filter(section => section.trim());
     const processedSections: string[] = [];
     
     for (const section of sections) {
       const trimmedSection = section.trim();
       if (!trimmedSection) continue;
       
-      // Split long paragraphs that might be run-on sentences
-      if (!trimmedSection.startsWith('#') && 
-          !trimmedSection.startsWith('-') && 
-          !trimmedSection.startsWith('*') && 
-          !trimmedSection.match(/^\d+\./) && 
-          !trimmedSection.startsWith('>')) {
+      // Handle headers, lists, and blockquotes as-is
+      if (trimmedSection.startsWith('#') || 
+          trimmedSection.startsWith('-') || 
+          trimmedSection.startsWith('*') || 
+          trimmedSection.match(/^\d+\./) || 
+          trimmedSection.startsWith('>')) {
+        processedSections.push(trimmedSection);
+        continue;
+      }
+      
+      // For regular paragraphs, ensure they're well-formatted
+      const cleanedParagraph = trimmedSection
+        .replace(/\s+/g, ' ')  // Normalize whitespace
+        .replace(/\n/g, ' ')   // Remove internal line breaks
+        .trim();
+      
+      // Split very long paragraphs
+      if (cleanedParagraph.length > 600) {
+        const sentences = cleanedParagraph.split(/\. (?=[A-Z])/);
+        let currentParagraph = '';
         
-        // If it's a very long paragraph (more than 500 chars), try to split it
-        if (trimmedSection.length > 500) {
-          const sentences = trimmedSection.split(/\. (?=[A-Z])/);
-          let currentParagraph = '';
+        for (let i = 0; i < sentences.length; i++) {
+          const sentence = sentences[i] + (i < sentences.length - 1 ? '.' : '');
           
-          for (let i = 0; i < sentences.length; i++) {
-            const sentence = sentences[i] + (i < sentences.length - 1 ? '.' : '');
-            
-            if (currentParagraph.length + sentence.length > 300 && currentParagraph.length > 0) {
-              processedSections.push(currentParagraph.trim());
-              currentParagraph = sentence + ' ';
-            } else {
-              currentParagraph += sentence + ' ';
-            }
-          }
-          
-          if (currentParagraph.trim()) {
+          if (currentParagraph.length + sentence.length > 400 && currentParagraph.length > 0) {
             processedSections.push(currentParagraph.trim());
+            currentParagraph = sentence + ' ';
+          } else {
+            currentParagraph += sentence + ' ';
           }
-        } else {
-          processedSections.push(trimmedSection);
+        }
+        
+        if (currentParagraph.trim()) {
+          processedSections.push(currentParagraph.trim());
         }
       } else {
-        processedSections.push(trimmedSection);
+        processedSections.push(cleanedParagraph);
       }
     }
     
-    return processedSections.join('\n\n');
+    const result = processedSections.join('\n\n');
+    console.log('Processed content structure (first 500 chars):', result.substring(0, 500));
+    
+    return result;
   }
 
   async sendBlogEmail(blogData: BlogEmailData): Promise<boolean> {

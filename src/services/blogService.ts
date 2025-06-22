@@ -1,3 +1,4 @@
+
 import { toast } from 'sonner';
 
 export interface BlogContent {
@@ -113,112 +114,139 @@ export class BlogService {
     const content = await this.callGeminiAPI(
       `Write a comprehensive, engaging blog post with the headline "${headline}" about "${topic}".
 
-      IMPORTANT: Use proper Markdown formatting throughout the entire post.
+      IMPORTANT: Write in proper paragraphs with clear separation. Each paragraph should be well-structured and separated by double line breaks.
       
       STRUCTURE (800-1000 words):
       
       # ${headline}
       
-      Start with an engaging opening paragraph that hooks the reader about ${topic}.
+      Start with an engaging opening paragraph that hooks the reader about ${topic}. This should be a complete paragraph that introduces the topic and creates curiosity.
       
       ## Why This Matters Now
       
-      Write a paragraph explaining why this topic is relevant and important right now.
+      Write a full paragraph explaining why this topic is relevant and important right now. Include specific reasons and current trends.
       
       ## The Problem Most People Don't Know About
       
-      Continue with 2-3 paragraphs covering the main challenges people face with ${topic}.
+      Write 2-3 separate paragraphs covering the main challenges people face with ${topic}. Each paragraph should focus on a different aspect of the problem.
+      
+      Make sure each paragraph is substantial and provides valuable information.
       
       ## The Solution That Actually Works
       
+      Write a comprehensive paragraph introducing the solution before listing the benefits.
+      
       ### Key Benefits
       
-      - Benefit 1: Specific advantage
-      - Benefit 2: Another clear benefit  
-      - Benefit 3: Third important benefit
+      - Benefit 1: Specific advantage with detailed explanation
+      - Benefit 2: Another clear benefit with examples  
+      - Benefit 3: Third important benefit with proof
       
       ### How to Get Started
       
-      1. **Step 1**: Clear action step
-      2. **Step 2**: Next specific step
-      3. **Step 3**: Final implementation step
+      Write an introductory paragraph before the steps.
+      
+      1. **Step 1**: Clear action step with detailed instructions
+      2. **Step 2**: Next specific step with examples
+      3. **Step 3**: Final implementation step with tips
       
       ## Real Examples and Results
       
-      Provide specific examples and case studies showing results.
+      Provide specific examples and case studies showing results in multiple paragraphs.
       
-      > "Include a compelling quote or testimonial here to add credibility."
+      Include detailed examples and statistics to support your points.
+      
+      > "Include a compelling quote or testimonial here to add credibility and social proof."
       
       ## Common Mistakes to Avoid
       
-      - **Mistake 1**: What not to do and why
-      - **Mistake 2**: Another pitfall to avoid
-      - **Mistake 3**: Third common error
+      Write an introduction paragraph about why avoiding mistakes is important.
+      
+      - **Mistake 1**: What not to do and why, with detailed explanation
+      - **Mistake 2**: Another pitfall to avoid with examples
+      - **Mistake 3**: Third common error with solutions
       
       ## Take Action Today
       
-      End with a compelling closing paragraph that encourages immediate action.
+      End with a compelling closing paragraph that encourages immediate action and summarizes the key points.
       
       FORMATTING REQUIREMENTS:
-      - Use proper markdown headings (# ## ###)
-      - Include bullet points and numbered lists
-      - Add bold and italic text for emphasis
-      - Include at least one blockquote
+      - Write in natural, conversational paragraphs
+      - Each paragraph should be 3-5 sentences long
+      - Separate each paragraph with double line breaks
       - Use the keyword "${topic}" naturally 6-8 times throughout
-      - Write in an engaging, conversational tone
-      - Ensure each section flows naturally into the next
-      - CRITICAL: Write each paragraph as a separate paragraph with proper line breaks between them`
+      - Ensure smooth transitions between sections
+      - Make each section substantial and informative
+      - Write complete thoughts in each paragraph`
     );
 
-    // Enhanced content processing to ensure proper paragraph structure
-    return this.processContentForProperFormatting(content);
+    return this.ensureProperParagraphFormatting(content);
   }
 
-  private processContentForProperFormatting(content: string): string {
-    // Split content into lines and process
+  private ensureProperParagraphFormatting(content: string): string {
+    // Split content into lines
     const lines = content.split('\n');
-    const processedLines: string[] = [];
+    const formattedLines: string[] = [];
+    let currentParagraph = '';
     
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i].trim();
       
-      // Skip empty lines
+      // If it's an empty line, skip it
       if (!line) {
-        processedLines.push('');
         continue;
       }
       
-      // If it's a header, bullet point, or numbered list, keep as is
+      // If it's a header, list item, or blockquote, handle separately
       if (line.startsWith('#') || line.startsWith('-') || line.startsWith('*') || 
           line.match(/^\d+\./) || line.startsWith('>')) {
-        processedLines.push(line);
+        
+        // If we have a current paragraph, add it first
+        if (currentParagraph.trim()) {
+          formattedLines.push(currentParagraph.trim());
+          formattedLines.push(''); // Add blank line after paragraph
+          currentParagraph = '';
+        }
+        
+        // Add the special line
+        formattedLines.push(line);
+        formattedLines.push(''); // Add blank line after special elements
         continue;
       }
       
-      // For regular paragraphs, ensure they end with double line break
-      processedLines.push(line);
+      // Regular text - add to current paragraph
+      if (currentParagraph) {
+        currentParagraph += ' ' + line;
+      } else {
+        currentParagraph = line;
+      }
       
-      // Add extra line break after paragraphs (but not after headers or lists)
-      if (!line.startsWith('#') && !line.startsWith('-') && !line.startsWith('*') && 
-          !line.match(/^\d+\./) && !line.startsWith('>')) {
-        // Look ahead to see if next non-empty line is not a header/list
-        let nextNonEmptyIndex = i + 1;
-        while (nextNonEmptyIndex < lines.length && !lines[nextNonEmptyIndex].trim()) {
-          nextNonEmptyIndex++;
-        }
-        
-        if (nextNonEmptyIndex < lines.length) {
-          const nextLine = lines[nextNonEmptyIndex].trim();
-          if (!nextLine.startsWith('#') && !nextLine.startsWith('-') && 
-              !nextLine.startsWith('*') && !nextLine.match(/^\d+\./) && 
-              !nextLine.startsWith('>')) {
-            processedLines.push('');
-          }
-        }
+      // Check if this might be the end of a paragraph
+      // (Look for sentence endings or if the next line is special)
+      const nextLine = i + 1 < lines.length ? lines[i + 1].trim() : '';
+      const isEndOfSentence = line.endsWith('.') || line.endsWith('!') || line.endsWith('?');
+      const nextIsSpecial = nextLine.startsWith('#') || nextLine.startsWith('-') || 
+                           nextLine.startsWith('*') || nextLine.match(/^\d+\./) || 
+                           nextLine.startsWith('>') || !nextLine;
+      
+      // If this looks like a complete paragraph, finalize it
+      if (isEndOfSentence && (nextIsSpecial || currentParagraph.length > 200)) {
+        formattedLines.push(currentParagraph.trim());
+        formattedLines.push(''); // Add blank line after paragraph
+        currentParagraph = '';
       }
     }
     
-    return processedLines.join('\n');
+    // Add any remaining paragraph
+    if (currentParagraph.trim()) {
+      formattedLines.push(currentParagraph.trim());
+    }
+    
+    // Clean up excessive blank lines
+    const result = formattedLines.join('\n').replace(/\n{3,}/g, '\n\n');
+    
+    console.log('Formatted content structure:', result.substring(0, 500) + '...');
+    return result;
   }
 
   generateTopicRelevantImage(topic: string, headline: string): string {
