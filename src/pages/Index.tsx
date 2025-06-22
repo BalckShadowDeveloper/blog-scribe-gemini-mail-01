@@ -154,68 +154,70 @@ const Index = () => {
   };
 
   const generateBlogPost = async (headline: string, topic: string) => {
-    addLog('Generating professionally formatted blog post...');
+    addLog('Generating markdown-formatted blog post...');
     const blogContent = await callGeminiAPI(
       `Write a comprehensive, engaging blog post with the headline "${headline}" about "${topic}".
 
-      CRITICAL FORMATTING REQUIREMENTS:
-      - Write in PLAIN TEXT only - absolutely NO markdown formatting
-      - Structure content in clear, separate paragraphs
-      - Each paragraph should be 2-4 sentences maximum
-      - Use simple, natural transitions between paragraphs
-      - NO section headers, labels, or formatting symbols
-      - Write in a conversational, engaging tone
+      IMPORTANT: Use proper Markdown formatting throughout the entire post.
       
-      CONTENT STRUCTURE (800-1000 words):
+      STRUCTURE (800-1000 words):
+      
+      # ${headline}
       
       Start with an engaging opening paragraph that hooks the reader about ${topic}.
       
-      Write a second paragraph explaining why this topic matters right now.
+      ## Why This Matters Now
       
-      Continue with 4-6 well-structured paragraphs covering:
-      - The main problem or challenge people face
-      - Why traditional approaches don't work
-      - The solution or method that actually works
-      - Specific benefits and results people can expect
-      - Real examples or practical applications
-      - Action steps readers can take immediately
+      Write a paragraph explaining why this topic is relevant and important right now.
       
-      End with a compelling closing paragraph that encourages engagement.
+      ## The Problem Most People Don't Know About
       
-      IMPORTANT RULES:
-      - Each paragraph must be separated by a blank line
-      - No bullet points, numbered lists, or formatting
-      - Keep paragraphs short and readable
+      Continue with 2-3 paragraphs covering the main challenges people face with ${topic}.
+      
+      ## The Solution That Actually Works
+      
+      ### Key Benefits
+      
+      - Benefit 1: Specific advantage
+      - Benefit 2: Another clear benefit  
+      - Benefit 3: Third important benefit
+      
+      ### How to Get Started
+      
+      1. **Step 1**: Clear action step
+      2. **Step 2**: Next specific step
+      3. **Step 3**: Final implementation step
+      
+      ## Real Examples and Results
+      
+      Provide specific examples and case studies showing results.
+      
+      > "Include a compelling quote or testimonial here to add credibility."
+      
+      ## Common Mistakes to Avoid
+      
+      - **Mistake 1**: What not to do and why
+      - **Mistake 2**: Another pitfall to avoid
+      - **Mistake 3**: Third common error
+      
+      ## Take Action Today
+      
+      End with a compelling closing paragraph that encourages immediate action.
+      
+      FORMATTING REQUIREMENTS:
+      - Use proper markdown headings (# ## ###)
+      - Include bullet points and numbered lists
+      - Add bold and italic text for emphasis
+      - Include at least one blockquote
       - Use the keyword "${topic}" naturally 6-8 times throughout
-      - Include specific details and actionable advice
-      - Write as one continuous, well-flowing article
-      
-      Focus on providing real value and practical insights about ${topic}.`
+      - Write in an engaging, conversational tone
+      - Ensure each section flows naturally into the next`
     );
     
-    // Enhanced content formatting to ensure proper paragraph structure
-    let cleanContent = blogContent
-      // Remove any remaining markdown symbols
-      .replace(/#{1,6}|[*_`~]/g, '')
-      // Remove section labels and headers
-      .replace(/^(INTRODUCTION|CONCLUSION|THE PROBLEM|THE SOLUTION|BENEFITS|ACTION STEPS):\s*/gim, '')
-      // Clean up extra whitespace but preserve paragraph breaks
-      .replace(/[ \t]+/g, ' ')
-      .replace(/\n[ \t]*\n/g, '\n\n')
-      .trim();
-
-    // Ensure proper paragraph structure
-    const paragraphs = cleanContent.split('\n\n')
-      .filter(p => p.trim().length > 50) // Filter out very short segments
-      .map(p => p.trim().replace(/\n/g, ' ')); // Clean each paragraph
-
-    // Rejoin with proper spacing
-    const formattedContent = paragraphs.join('\n\n');
-    
     addLog('Running enhanced content validation...');
-    const validatedContent = await performMultipleValidations(formattedContent);
+    const validatedContent = await performMultipleValidations(blogContent);
     
-    addLog(`Generated professionally formatted blog post (${validatedContent.length} characters)`);
+    addLog(`Generated markdown blog post (${validatedContent.length} characters)`);
     return validatedContent;
   };
 
@@ -244,44 +246,80 @@ const Index = () => {
   };
 
   const formatForBlogger = (content: string, headline: string, topic: string, imageUrl: string) => {
-    // Split content into proper paragraphs and format for HTML
-    const paragraphs = content.split('\n\n')
-      .filter(p => p.trim().length > 0)
-      .map(p => p.trim());
-
+    // Parse markdown to HTML for email
+    const htmlContent = parseMarkdown(content);
+    
     // Generate second image for variety
     const secondImageUrl = `https://picsum.photos/600/300?random=${Date.now() + 1000}&sig=${encodeURIComponent(topic + '-secondary')}`;
     
-    // Format with proper paragraph structure
+    // Format with enhanced styling
     const formattedContent = `
-<div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.7; color: #2c3e50; max-width: 800px; margin: 0 auto; padding: 20px;">
+<div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.7; color: #2c3e50; max-width: 800px; margin: 0 auto; padding: 20px; background: #ffffff;">
   
-  <h1 style="font-size: 32px; font-weight: bold; color: #1a202c; margin-bottom: 10px; line-height: 1.2;">${headline}</h1>
-  
-  <div style="margin-bottom: 25px;">
-    <span style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px;">${topic}</span>
-    <span style="margin-left: 15px; color: #718096; font-size: 14px;">${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+  <div style="text-align: center; margin-bottom: 30px; padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px; color: white;">
+    <h1 style="font-size: 28px; font-weight: bold; margin: 0; line-height: 1.3;">${headline}</h1>
+    <div style="margin-top: 15px; display: flex; align-items: center; justify-content: center; gap: 15px; flex-wrap: wrap;">
+      <span style="background: rgba(255,255,255,0.2); padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px;">${topic}</span>
+      <span style="font-size: 14px; opacity: 0.9;">${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+    </div>
   </div>
   
   <div style="text-align: center; margin-bottom: 30px;">
-    <img src="${imageUrl}" alt="${headline}" style="width: 100%; max-width: 800px; height: 400px; object-fit: cover; border-radius: 12px; box-shadow: 0 8px 32px rgba(0,0,0,0.1);" title="${headline}">
+    <img src="${imageUrl}" alt="${headline}" style="width: 100%; max-width: 800px; height: 400px; object-fit: cover; border-radius: 12px; box-shadow: 0 8px 32px rgba(0,0,0,0.1);">
   </div>
   
-  <div style="font-size: 17px; line-height: 1.8; color: #2d3748;">
-    ${paragraphs.map(paragraph => 
-      `<p style="margin: 20px 0; text-align: justify;">${paragraph}</p>`
-    ).join('')}
+  <div style="font-size: 16px; line-height: 1.8;">
+    ${htmlContent}
   </div>
   
   <div style="text-align: center; margin: 40px 0;">
-    <img src="${secondImageUrl}" alt="Supporting visual for ${topic}" style="width: 100%; max-width: 600px; height: 300px; object-fit: cover; border-radius: 12px; box-shadow: 0 6px 24px rgba(0,0,0,0.1);" title="Learn more about ${topic}">
+    <img src="${secondImageUrl}" alt="Supporting visual for ${topic}" style="width: 100%; max-width: 600px; height: 300px; object-fit: cover; border-radius: 12px; box-shadow: 0 6px 24px rgba(0,0,0,0.1);">
   </div>
   
   <div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); padding: 20px; border-radius: 12px; margin: 30px 0; text-align: center;">
-    <p style="color: white; font-size: 16px; font-weight: 500; margin: 0;">💡 Found this helpful? Share it with your friends and let us know what you think in the comments!</p>
+    <p style="color: white; font-size: 16px; font-weight: 500; margin: 0;">💡 Found this helpful? Share it with your friends and let us know what you think!</p>
   </div>
   
-</div>`;
+</div>
+
+<style>
+  h1, h2, h3, h4, h5, h6 { color: #2c3e50; margin-top: 30px; margin-bottom: 15px; font-weight: bold; }
+  h1 { font-size: 28px; color: #6b46c1; border-bottom: 3px solid #6b46c1; padding-bottom: 10px; }
+  h2 { font-size: 24px; color: #3b82f6; border-bottom: 2px solid #e5e7eb; padding-bottom: 8px; }
+  h3 { font-size: 20px; color: #4f46e5; }
+  p { margin: 15px 0; text-align: justify; }
+  strong { color: #1f2937; font-weight: 600; }
+  em { color: #6b46c1; font-style: italic; }
+  ul, ol { margin: 15px 0; padding-left: 25px; }
+  li { margin: 8px 0; }
+  blockquote { 
+    border-left: 4px solid #6b46c1; 
+    background: #f8fafc; 
+    padding: 15px 20px; 
+    margin: 20px 0; 
+    font-style: italic; 
+    color: #4c1d95;
+    border-radius: 0 8px 8px 0;
+  }
+  code { 
+    background: #f1f5f9; 
+    color: #6b46c1; 
+    padding: 2px 6px; 
+    border-radius: 4px; 
+    font-family: 'Monaco', 'Consolas', monospace;
+    font-size: 14px;
+  }
+  pre { 
+    background: #1e293b; 
+    color: #e2e8f0; 
+    padding: 20px; 
+    border-radius: 8px; 
+    overflow-x: auto; 
+    margin: 20px 0;
+  }
+  a { color: #3b82f6; text-decoration: none; }
+  a:hover { text-decoration: underline; color: #1d4ed8; }
+</style>`;
     
     return formattedContent;
   };
