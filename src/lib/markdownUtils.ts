@@ -8,7 +8,9 @@ marked.setOptions({
 });
 
 export const parseMarkdown = (markdown: string): string => {
-  return marked(markdown);
+  const result = marked(markdown);
+  // marked can return a Promise in some cases, but with our config it should be synchronous
+  return typeof result === 'string' ? result : '';
 };
 
 export const cleanMarkdownForPreview = (content: string): string => {

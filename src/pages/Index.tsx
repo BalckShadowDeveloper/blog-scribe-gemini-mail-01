@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import emailjs from '@emailjs/browser';
@@ -7,6 +8,7 @@ import AutomationLogs from '@/components/AutomationLogs';
 import BlogPostPreview from '@/components/BlogPostPreview';
 import { useContentValidation } from '@/hooks/useContentValidation';
 import { useRandomScheduling } from '@/hooks/useRandomScheduling';
+import { parseMarkdown } from '@/lib/markdownUtils';
 import { Card, CardContent } from '@/components/ui/card';
 
 const Index = () => {
