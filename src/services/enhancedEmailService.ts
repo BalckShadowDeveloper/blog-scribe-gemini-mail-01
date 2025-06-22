@@ -27,7 +27,11 @@ export class EnhancedEmailService {
   }
 
   private formatForBlogger(content: string, headline: string, topic: string, imageUrl: string): string {
-    const htmlContent = parseMarkdown(content);
+    // First, process the content to ensure proper paragraph structure
+    const processedContent = this.processContentStructure(content);
+    
+    // Then convert to HTML
+    const htmlContent = parseMarkdown(processedContent);
     const secondImageUrl = `https://picsum.photos/600/300?random=${Date.now() + 1000}&sig=${encodeURIComponent(topic + '-secondary')}`;
     
     return `
@@ -64,16 +68,16 @@ export class EnhancedEmailService {
   h1 { font-size: 28px; color: #6b46c1; border-bottom: 3px solid #6b46c1; padding-bottom: 10px; }
   h2 { font-size: 24px; color: #3b82f6; border-bottom: 2px solid #e5e7eb; padding-bottom: 8px; }
   h3 { font-size: 20px; color: #4f46e5; }
-  p { margin: 15px 0; text-align: justify; }
+  p { margin: 20px 0; text-align: justify; line-height: 1.7; }
   strong { color: #1f2937; font-weight: 600; }
   em { color: #6b46c1; font-style: italic; }
-  ul, ol { margin: 15px 0; padding-left: 25px; }
-  li { margin: 8px 0; }
+  ul, ol { margin: 20px 0; padding-left: 25px; }
+  li { margin: 10px 0; line-height: 1.6; }
   blockquote { 
     border-left: 4px solid #6b46c1; 
     background: #f8fafc; 
-    padding: 15px 20px; 
-    margin: 20px 0; 
+    padding: 20px; 
+    margin: 25px 0; 
     font-style: italic; 
     color: #4c1d95;
     border-radius: 0 8px 8px 0;
@@ -97,6 +101,52 @@ export class EnhancedEmailService {
   a { color: #3b82f6; text-decoration: none; }
   a:hover { text-decoration: underline; color: #1d4ed8; }
 </style>`;
+  }
+
+  private processContentStructure(content: string): string {
+    // Split content by double line breaks to identify paragraphs
+    const sections = content.split('\n\n');
+    const processedSections: string[] = [];
+    
+    for (const section of sections) {
+      const trimmedSection = section.trim();
+      if (!trimmedSection) continue;
+      
+      // Split long paragraphs that might be run-on sentences
+      if (!trimmedSection.startsWith('#') && 
+          !trimmedSection.startsWith('-') && 
+          !trimmedSection.startsWith('*') && 
+          !trimmedSection.match(/^\d+\./) && 
+          !trimmedSection.startsWith('>')) {
+        
+        // If it's a very long paragraph (more than 500 chars), try to split it
+        if (trimmedSection.length > 500) {
+          const sentences = trimmedSection.split(/\. (?=[A-Z])/);
+          let currentParagraph = '';
+          
+          for (let i = 0; i < sentences.length; i++) {
+            const sentence = sentences[i] + (i < sentences.length - 1 ? '.' : '');
+            
+            if (currentParagraph.length + sentence.length > 300 && currentParagraph.length > 0) {
+              processedSections.push(currentParagraph.trim());
+              currentParagraph = sentence + ' ';
+            } else {
+              currentParagraph += sentence + ' ';
+            }
+          }
+          
+          if (currentParagraph.trim()) {
+            processedSections.push(currentParagraph.trim());
+          }
+        } else {
+          processedSections.push(trimmedSection);
+        }
+      } else {
+        processedSections.push(trimmedSection);
+      }
+    }
+    
+    return processedSections.join('\n\n');
   }
 
   async sendBlogEmail(blogData: BlogEmailData): Promise<boolean> {

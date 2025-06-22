@@ -1,4 +1,3 @@
-
 import { toast } from 'sonner';
 
 export interface BlogContent {
@@ -111,7 +110,7 @@ export class BlogService {
   }
 
   async generateBlogPost(headline: string, topic: string): Promise<string> {
-    return await this.callGeminiAPI(
+    const content = await this.callGeminiAPI(
       `Write a comprehensive, engaging blog post with the headline "${headline}" about "${topic}".
 
       IMPORTANT: Use proper Markdown formatting throughout the entire post.
@@ -167,8 +166,59 @@ export class BlogService {
       - Include at least one blockquote
       - Use the keyword "${topic}" naturally 6-8 times throughout
       - Write in an engaging, conversational tone
-      - Ensure each section flows naturally into the next`
+      - Ensure each section flows naturally into the next
+      - CRITICAL: Write each paragraph as a separate paragraph with proper line breaks between them`
     );
+
+    // Enhanced content processing to ensure proper paragraph structure
+    return this.processContentForProperFormatting(content);
+  }
+
+  private processContentForProperFormatting(content: string): string {
+    // Split content into lines and process
+    const lines = content.split('\n');
+    const processedLines: string[] = [];
+    
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i].trim();
+      
+      // Skip empty lines
+      if (!line) {
+        processedLines.push('');
+        continue;
+      }
+      
+      // If it's a header, bullet point, or numbered list, keep as is
+      if (line.startsWith('#') || line.startsWith('-') || line.startsWith('*') || 
+          line.match(/^\d+\./) || line.startsWith('>')) {
+        processedLines.push(line);
+        continue;
+      }
+      
+      // For regular paragraphs, ensure they end with double line break
+      processedLines.push(line);
+      
+      // Add extra line break after paragraphs (but not after headers or lists)
+      if (!line.startsWith('#') && !line.startsWith('-') && !line.startsWith('*') && 
+          !line.match(/^\d+\./) && !line.startsWith('>')) {
+        // Look ahead to see if next non-empty line is not a header/list
+        let nextNonEmptyIndex = i + 1;
+        while (nextNonEmptyIndex < lines.length && !lines[nextNonEmptyIndex].trim()) {
+          nextNonEmptyIndex++;
+        }
+        
+        if (nextNonEmptyIndex < lines.length) {
+          const nextLine = lines[nextNonEmptyIndex].trim();
+          if (!nextLine.startsWith('#') && !nextLine.startsWith('-') && 
+              !nextLine.startsWith('*') && !nextLine.match(/^\d+\./) && 
+              !nextLine.startsWith('>')) {
+            processedLines.push('');
+          }
+        }
+      }
+    }
+    
+    return processedLines.join('\n');
   }
 
   generateTopicRelevantImage(topic: string, headline: string): string {
