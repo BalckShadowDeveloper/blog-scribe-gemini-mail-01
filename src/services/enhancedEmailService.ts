@@ -1,6 +1,5 @@
-
 import emailjs from '@emailjs/browser';
-import { parseMarkdown } from '@/lib/markdownUtils';
+import { markdownToHtml } from '@/lib/markdownUtils';
 import { toast } from 'sonner';
 
 export interface EmailConfig {
@@ -30,8 +29,8 @@ export class EnhancedEmailService {
     // Process content to ensure proper structure before converting to HTML
     const structuredContent = this.ensureProperContentStructure(content);
     
-    // Convert to HTML
-    const htmlContent = parseMarkdown(structuredContent);
+    // Convert to HTML using the new function
+    const htmlContent = markdownToHtml(structuredContent);
     const secondImageUrl = `https://picsum.photos/600/300?random=${Date.now() + 1000}&sig=${encodeURIComponent(topic + '-secondary')}`;
     
     return `
@@ -61,61 +60,28 @@ export class EnhancedEmailService {
     <p style="color: white; font-size: 16px; font-weight: 500; margin: 0;">💡 Found this helpful? Share it with your friends and let us know what you think!</p>
   </div>
   
-</div>
-
-<style>
-  h1, h2, h3, h4, h5, h6 { color: #2c3e50; margin-top: 30px; margin-bottom: 15px; font-weight: bold; }
-  h1 { font-size: 28px; color: #6b46c1; border-bottom: 3px solid #6b46c1; padding-bottom: 10px; }
-  h2 { font-size: 24px; color: #3b82f6; border-bottom: 2px solid #e5e7eb; padding-bottom: 8px; }
-  h3 { font-size: 20px; color: #4f46e5; }
-  p { margin: 20px 0; text-align: justify; line-height: 1.7; }
-  strong { color: #1f2937; font-weight: 600; }
-  em { color: #6b46c1; font-style: italic; }
-  ul, ol { margin: 20px 0; padding-left: 25px; }
-  li { margin: 10px 0; line-height: 1.6; }
-  blockquote { 
-    border-left: 4px solid #6b46c1; 
-    background: #f8fafc; 
-    padding: 20px; 
-    margin: 25px 0; 
-    font-style: italic; 
-    color: #4c1d95;
-    border-radius: 0 8px 8px 0;
-  }
-  code { 
-    background: #f1f5f9; 
-    color: #6b46c1; 
-    padding: 2px 6px; 
-    border-radius: 4px; 
-    font-family: 'Monaco', 'Consolas', monospace;
-    font-size: 14px;
-  }
-  pre { 
-    background: #1e293b; 
-    color: #e2e8f0; 
-    padding: 20px; 
-    border-radius: 8px; 
-    overflow-x: auto; 
-    margin: 20px 0;
-  }
-  a { color: #3b82f6; text-decoration: none; }
-  a:hover { text-decoration: underline; color: #1d4ed8; }
-</style>`;
+</div>`;
   }
 
   private ensureProperContentStructure(content: string): string {
     console.log('Input content length:', content.length);
     console.log('First 300 chars:', content.substring(0, 300));
     
-    // Split by double newlines to get sections
-    const sections = content.split('\n\n').filter(section => section.trim());
+    // Clean up the content by normalizing line breaks and removing excessive whitespace
+    let cleanedContent = content
+      .replace(/\r\n/g, '\n')  // Normalize line endings
+      .replace(/\n{3,}/g, '\n\n')  // Replace multiple line breaks with double
+      .trim();
+    
+    // Split into sections based on double line breaks
+    const sections = cleanedContent.split('\n\n').filter(section => section.trim());
     const processedSections: string[] = [];
     
     for (const section of sections) {
       const trimmedSection = section.trim();
       if (!trimmedSection) continue;
       
-      // Handle headers, lists, and blockquotes as-is
+      // Keep headers, lists, and blockquotes as-is
       if (trimmedSection.startsWith('#') || 
           trimmedSection.startsWith('-') || 
           trimmedSection.startsWith('*') || 
@@ -125,21 +91,20 @@ export class EnhancedEmailService {
         continue;
       }
       
-      // For regular paragraphs, ensure they're well-formatted
+      // For regular paragraphs, clean up internal formatting
       const cleanedParagraph = trimmedSection
-        .replace(/\s+/g, ' ')  // Normalize whitespace
-        .replace(/\n/g, ' ')   // Remove internal line breaks
+        .replace(/\s+/g, ' ')  // Normalize internal whitespace
         .trim();
       
-      // Split very long paragraphs
-      if (cleanedParagraph.length > 600) {
+      // Split very long paragraphs for better readability
+      if (cleanedParagraph.length > 500) {
         const sentences = cleanedParagraph.split(/\. (?=[A-Z])/);
         let currentParagraph = '';
         
         for (let i = 0; i < sentences.length; i++) {
           const sentence = sentences[i] + (i < sentences.length - 1 ? '.' : '');
           
-          if (currentParagraph.length + sentence.length > 400 && currentParagraph.length > 0) {
+          if (currentParagraph.length + sentence.length > 350 && currentParagraph.length > 0) {
             processedSections.push(currentParagraph.trim());
             currentParagraph = sentence + ' ';
           } else {
