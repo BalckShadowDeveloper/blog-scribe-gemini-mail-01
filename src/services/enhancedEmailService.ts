@@ -1,3 +1,4 @@
+
 import emailjs from '@emailjs/browser';
 import { markdownToHtml } from '@/lib/markdownUtils';
 import { toast } from 'sonner';
@@ -29,8 +30,9 @@ export class EnhancedEmailService {
     // Process content to ensure proper structure before converting to HTML
     const structuredContent = this.ensureProperContentStructure(content);
     
-    // Convert to HTML using the new function
+    // Convert markdown to properly formatted HTML
     const htmlContent = markdownToHtml(structuredContent);
+    
     const secondImageUrl = `https://picsum.photos/600/300?random=${Date.now() + 1000}&sig=${encodeURIComponent(topic + '-secondary')}`;
     
     return `
@@ -64,8 +66,8 @@ export class EnhancedEmailService {
   }
 
   private ensureProperContentStructure(content: string): string {
+    console.log('Processing content for email formatting...');
     console.log('Input content length:', content.length);
-    console.log('First 300 chars:', content.substring(0, 300));
     
     // Clean up the content by normalizing line breaks and removing excessive whitespace
     let cleanedContent = content
@@ -73,57 +75,9 @@ export class EnhancedEmailService {
       .replace(/\n{3,}/g, '\n\n')  // Replace multiple line breaks with double
       .trim();
     
-    // Split into sections based on double line breaks
-    const sections = cleanedContent.split('\n\n').filter(section => section.trim());
-    const processedSections: string[] = [];
+    console.log('Cleaned content preview:', cleanedContent.substring(0, 300));
     
-    for (const section of sections) {
-      const trimmedSection = section.trim();
-      if (!trimmedSection) continue;
-      
-      // Keep headers, lists, and blockquotes as-is
-      if (trimmedSection.startsWith('#') || 
-          trimmedSection.startsWith('-') || 
-          trimmedSection.startsWith('*') || 
-          trimmedSection.match(/^\d+\./) || 
-          trimmedSection.startsWith('>')) {
-        processedSections.push(trimmedSection);
-        continue;
-      }
-      
-      // For regular paragraphs, clean up internal formatting
-      const cleanedParagraph = trimmedSection
-        .replace(/\s+/g, ' ')  // Normalize internal whitespace
-        .trim();
-      
-      // Split very long paragraphs for better readability
-      if (cleanedParagraph.length > 500) {
-        const sentences = cleanedParagraph.split(/\. (?=[A-Z])/);
-        let currentParagraph = '';
-        
-        for (let i = 0; i < sentences.length; i++) {
-          const sentence = sentences[i] + (i < sentences.length - 1 ? '.' : '');
-          
-          if (currentParagraph.length + sentence.length > 350 && currentParagraph.length > 0) {
-            processedSections.push(currentParagraph.trim());
-            currentParagraph = sentence + ' ';
-          } else {
-            currentParagraph += sentence + ' ';
-          }
-        }
-        
-        if (currentParagraph.trim()) {
-          processedSections.push(currentParagraph.trim());
-        }
-      } else {
-        processedSections.push(cleanedParagraph);
-      }
-    }
-    
-    const result = processedSections.join('\n\n');
-    console.log('Processed content structure (first 500 chars):', result.substring(0, 500));
-    
-    return result;
+    return cleanedContent;
   }
 
   async sendBlogEmail(blogData: BlogEmailData): Promise<boolean> {
@@ -134,12 +88,15 @@ export class EnhancedEmailService {
     try {
       emailjs.init(this.emailConfig.emailjsPublicKey);
 
+      console.log('Formatting blog content for email...');
       const bloggerFormattedContent = this.formatForBlogger(
         blogData.content, 
         blogData.headline, 
         blogData.topic, 
         blogData.imageUrl
       );
+
+      console.log('Final formatted email content preview:', bloggerFormattedContent.substring(0, 500));
 
       const templateParams = {
         to_email: this.emailConfig.recipientEmail,
@@ -158,7 +115,7 @@ export class EnhancedEmailService {
       );
 
       if (response.status === 200) {
-        toast.success(`Blog post "${blogData.headline}" sent via email!`);
+        toast.success(`Blog post "${blogData.headline}" sent via email with proper formatting!`);
         return true;
       } else {
         throw new Error(`EmailJS returned status: ${response.status}`);
