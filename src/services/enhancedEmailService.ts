@@ -1,4 +1,5 @@
 
+
 import emailjs from '@emailjs/browser';
 import { markdownToHtml } from '@/lib/markdownUtils';
 import { toast } from 'sonner';
@@ -27,11 +28,17 @@ export class EnhancedEmailService {
   }
 
   private formatForBlogger(content: string, headline: string, topic: string, imageUrl: string): string {
-    // Process content to ensure proper structure before converting to HTML
-    const structuredContent = this.ensureProperContentStructure(content);
+    console.log('📧 Starting email formatting process...');
+    console.log('📝 Input content length:', content.length);
     
-    // Convert markdown to properly formatted HTML
+    // Step 1: Ensure proper content structure with enhanced preservation
+    const structuredContent = this.ensureProperContentStructure(content);
+    console.log('✅ Content structure preserved');
+    
+    // Step 2: Convert markdown to properly formatted HTML
     const htmlContent = markdownToHtml(structuredContent);
+    console.log('✅ Markdown converted to HTML');
+    console.log('🔍 HTML preview:', htmlContent.substring(0, 500) + '...');
     
     const secondImageUrl = `https://picsum.photos/600/300?random=${Date.now() + 1000}&sig=${encodeURIComponent(topic + '-secondary')}`;
     
@@ -66,18 +73,45 @@ export class EnhancedEmailService {
   }
 
   private ensureProperContentStructure(content: string): string {
-    console.log('Processing content for email formatting...');
-    console.log('Input content length:', content.length);
+    console.log('🔧 Processing content structure for email...');
+    console.log('📊 Input length:', content.length);
     
-    // Clean up the content by normalizing line breaks and removing excessive whitespace
-    let cleanedContent = content
-      .replace(/\r\n/g, '\n')  // Normalize line endings
-      .replace(/\n{3,}/g, '\n\n')  // Replace multiple line breaks with double
+    // Step 1: Normalize line endings but preserve structure
+    let processedContent = content
+      .replace(/\r\n/g, '\n')  // Normalize to Unix line endings
+      .replace(/\n{4,}/g, '\n\n\n')  // Limit to max 3 consecutive newlines
       .trim();
     
-    console.log('Cleaned content preview:', cleanedContent.substring(0, 300));
+    console.log('✅ Normalized line endings');
     
-    return cleanedContent;
+    // Step 2: Ensure proper paragraph separation
+    // Split content into blocks (paragraphs, headers, lists, etc.)
+    const blocks = processedContent.split(/\n\s*\n/).filter(block => block.trim());
+    console.log('📋 Found', blocks.length, 'content blocks');
+    
+    const enhancedBlocks: string[] = [];
+    
+    for (let i = 0; i < blocks.length; i++) {
+      const block = blocks[i].trim();
+      if (!block) continue;
+      
+      // Clean up internal spacing within the block
+      const cleanedBlock = block
+        .replace(/\n+/g, ' ')  // Replace internal newlines with spaces
+        .replace(/\s+/g, ' ')  // Normalize multiple spaces
+        .trim();
+      
+      enhancedBlocks.push(cleanedBlock);
+    }
+    
+    // Step 3: Rejoin with proper double newlines
+    const result = enhancedBlocks.join('\n\n');
+    
+    console.log('✅ Content structure enhanced');
+    console.log('📄 Output length:', result.length);
+    console.log('🔍 Structure preview:', result.substring(0, 400) + '...');
+    
+    return result;
   }
 
   async sendBlogEmail(blogData: BlogEmailData): Promise<boolean> {
@@ -88,7 +122,9 @@ export class EnhancedEmailService {
     try {
       emailjs.init(this.emailConfig.emailjsPublicKey);
 
-      console.log('Formatting blog content for email...');
+      console.log('🚀 Starting email send process...');
+      console.log('📧 Formatting content for email delivery...');
+      
       const bloggerFormattedContent = this.formatForBlogger(
         blogData.content, 
         blogData.headline, 
@@ -96,7 +132,8 @@ export class EnhancedEmailService {
         blogData.imageUrl
       );
 
-      console.log('Final formatted email content preview:', bloggerFormattedContent.substring(0, 500));
+      console.log('✅ Email content formatted successfully');
+      console.log('📤 Preparing to send email...');
 
       const templateParams = {
         to_email: this.emailConfig.recipientEmail,
@@ -115,14 +152,15 @@ export class EnhancedEmailService {
       );
 
       if (response.status === 200) {
-        toast.success(`Blog post "${blogData.headline}" sent via email with proper formatting!`);
+        console.log('✅ Email sent successfully!');
+        toast.success(`Blog post "${blogData.headline}" sent via email with enhanced formatting!`);
         return true;
       } else {
         throw new Error(`EmailJS returned status: ${response.status}`);
       }
     } catch (error) {
+      console.error('❌ Email sending failed:', error);
       toast.error('Failed to send email. Check EmailJS configuration and console for details.');
-      console.error('EmailJS Error:', error);
       return false;
     }
   }

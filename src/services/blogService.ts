@@ -114,103 +114,146 @@ export class BlogService {
     const content = await this.callGeminiAPI(
       `Write a comprehensive, engaging blog post with the headline "${headline}" about "${topic}".
 
-      IMPORTANT: Write in proper paragraphs with clear separation. Each paragraph should be well-structured and separated by double line breaks.
+      CRITICAL FORMATTING REQUIREMENTS:
+      - Write each paragraph as a complete block of text on its own line
+      - Separate each paragraph with EXACTLY ONE blank line
+      - Each paragraph should be 3-5 sentences long
+      - Never break sentences across multiple lines within a paragraph
       
       STRUCTURE (800-1000 words):
       
       # ${headline}
       
-      Start with an engaging opening paragraph that hooks the reader about ${topic}. This should be a complete paragraph that introduces the topic and creates curiosity.
+      Write an engaging opening paragraph that hooks the reader about ${topic}. This should be a complete paragraph that introduces the topic and creates curiosity. Make this paragraph 4-5 sentences long and write it as one continuous block of text.
       
       ## Why This Matters Now
       
-      Write a full paragraph explaining why this topic is relevant and important right now. Include specific reasons and current trends.
+      Write a full paragraph explaining why this topic is relevant and important right now. Include specific reasons and current trends. Make this 3-4 sentences as one block.
       
       ## The Problem Most People Don't Know About
       
-      Write 2-3 separate paragraphs covering the main challenges people face with ${topic}. Each paragraph should focus on a different aspect of the problem.
+      Write a comprehensive paragraph covering the main challenges people face with ${topic}. Focus on the primary issue that most people encounter. Write this as 4-5 sentences in one block.
       
-      Make sure each paragraph is substantial and provides valuable information.
+      Write another paragraph covering additional challenges and obstacles. This should be 3-4 sentences discussing secondary problems people face.
+      
+      Write a third paragraph explaining why these problems persist and what makes them difficult to solve. Keep this 3-4 sentences in one block.
       
       ## The Solution That Actually Works
       
-      Write a comprehensive paragraph introducing the solution before listing the benefits.
+      Write a comprehensive paragraph introducing the solution and explaining why it's effective. This should be 4-5 sentences that build excitement about the approach.
       
       ### Key Benefits
       
-      - Benefit 1: Specific advantage with detailed explanation
-      - Benefit 2: Another clear benefit with examples  
-      - Benefit 3: Third important benefit with proof
+      Write an introductory paragraph about the benefits before listing them. This should be 2-3 sentences.
+      
+      - Benefit 1: Specific advantage with detailed explanation in 1-2 sentences
+      - Benefit 2: Another clear benefit with examples in 1-2 sentences
+      - Benefit 3: Third important benefit with proof in 1-2 sentences
       
       ### How to Get Started
       
-      Write an introductory paragraph before the steps.
+      Write an introductory paragraph before the steps. This should be 3-4 sentences explaining the process.
       
-      1. **Step 1**: Clear action step with detailed instructions
-      2. **Step 2**: Next specific step with examples
-      3. **Step 3**: Final implementation step with tips
+      1. **Step 1**: Clear action step with detailed instructions (2-3 sentences)
+      2. **Step 2**: Next specific step with examples (2-3 sentences)
+      3. **Step 3**: Final implementation step with tips (2-3 sentences)
       
       ## Real Examples and Results
       
-      Provide specific examples and case studies showing results in multiple paragraphs.
+      Write a paragraph introducing the examples section. This should be 3-4 sentences explaining why examples are important.
       
-      Include detailed examples and statistics to support your points.
+      Write another paragraph providing specific examples and case studies. Include detailed examples and statistics to support your points. Make this 4-5 sentences.
       
-      > "Include a compelling quote or testimonial here to add credibility and social proof."
+      > "Include a compelling quote or testimonial here to add credibility and social proof. Make this 1-2 sentences that sound authentic."
+      
+      Write a final paragraph in this section summarizing the results and their significance. This should be 3-4 sentences.
       
       ## Common Mistakes to Avoid
       
-      Write an introduction paragraph about why avoiding mistakes is important.
+      Write an introduction paragraph about why avoiding mistakes is important. This should be 3-4 sentences.
       
-      - **Mistake 1**: What not to do and why, with detailed explanation
-      - **Mistake 2**: Another pitfall to avoid with examples
-      - **Mistake 3**: Third common error with solutions
+      - **Mistake 1**: What not to do and why, with detailed explanation (2-3 sentences)
+      - **Mistake 2**: Another pitfall to avoid with examples (2-3 sentences)
+      - **Mistake 3**: Third common error with solutions (2-3 sentences)
       
       ## Take Action Today
       
-      End with a compelling closing paragraph that encourages immediate action and summarizes the key points.
+      End with a compelling closing paragraph that encourages immediate action and summarizes the key points. This should be 4-5 sentences that motivate the reader to start.
       
-      FORMATTING REQUIREMENTS:
-      - Write in natural, conversational paragraphs
-      - Each paragraph should be 3-5 sentences long
-      - Separate each paragraph with double line breaks
+      FINAL FORMATTING CHECK:
+      - Each paragraph should be written as one continuous block of text
+      - Separate each paragraph with exactly one blank line
+      - Never break sentences within a paragraph
       - Use the keyword "${topic}" naturally 6-8 times throughout
-      - Ensure smooth transitions between sections
-      - Make each section substantial and informative
-      - Write complete thoughts in each paragraph`
+      - Ensure each paragraph flows naturally into the next`
     );
 
     return this.ensureProperParagraphFormatting(content);
   }
 
   private ensureProperParagraphFormatting(content: string): string {
-    // Split content into lines
-    const lines = content.split('\n');
-    const formattedLines: string[] = [];
+    console.log('🔧 Starting paragraph formatting process...');
+    console.log('📝 Original content length:', content.length);
+    
+    // Step 1: Normalize line endings and clean up
+    let cleanedContent = content
+      .replace(/\r\n/g, '\n')
+      .replace(/\t/g, ' ')
+      .replace(/ +/g, ' ');
+    
+    console.log('✅ Step 1: Normalized line endings');
+    
+    // Step 2: Split into lines for processing
+    const lines = cleanedContent.split('\n');
+    const processedLines: string[] = [];
     let currentParagraph = '';
+    let insideCodeBlock = false;
+    
+    console.log('📊 Processing', lines.length, 'lines');
     
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i].trim();
       
-      // If it's an empty line, skip it
+      // Handle code blocks
+      if (line.startsWith('```')) {
+        insideCodeBlock = !insideCodeBlock;
+        if (currentParagraph.trim()) {
+          processedLines.push(currentParagraph.trim());
+          processedLines.push('');
+          currentParagraph = '';
+        }
+        processedLines.push(line);
+        processedLines.push('');
+        continue;
+      }
+      
+      if (insideCodeBlock) {
+        processedLines.push(line);
+        continue;
+      }
+      
+      // Skip empty lines
       if (!line) {
         continue;
       }
       
-      // If it's a header, list item, or blockquote, handle separately
-      if (line.startsWith('#') || line.startsWith('-') || line.startsWith('*') || 
-          line.match(/^\d+\./) || line.startsWith('>')) {
+      // Handle special elements (headers, lists, blockquotes)
+      if (line.startsWith('#') || 
+          line.startsWith('-') || 
+          line.startsWith('*') || 
+          line.match(/^\d+\./) || 
+          line.startsWith('>')) {
         
-        // If we have a current paragraph, add it first
+        // Finalize current paragraph if exists
         if (currentParagraph.trim()) {
-          formattedLines.push(currentParagraph.trim());
-          formattedLines.push(''); // Add blank line after paragraph
+          processedLines.push(currentParagraph.trim());
+          processedLines.push('');
           currentParagraph = '';
         }
         
-        // Add the special line
-        formattedLines.push(line);
-        formattedLines.push(''); // Add blank line after special elements
+        // Add special element
+        processedLines.push(line);
+        processedLines.push('');
         continue;
       }
       
@@ -221,31 +264,37 @@ export class BlogService {
         currentParagraph = line;
       }
       
-      // Check if this might be the end of a paragraph
-      // (Look for sentence endings or if the next line is special)
+      // Check if we should finalize this paragraph
+      const isEndOfSentence = line.endsWith('.') || line.endsWith('!') || line.endsWith('?') || line.endsWith('"');
       const nextLine = i + 1 < lines.length ? lines[i + 1].trim() : '';
-      const isEndOfSentence = line.endsWith('.') || line.endsWith('!') || line.endsWith('?');
       const nextIsSpecial = nextLine.startsWith('#') || nextLine.startsWith('-') || 
                            nextLine.startsWith('*') || nextLine.match(/^\d+\./) || 
                            nextLine.startsWith('>') || !nextLine;
       
-      // If this looks like a complete paragraph, finalize it
-      if (isEndOfSentence && (nextIsSpecial || currentParagraph.length > 200)) {
-        formattedLines.push(currentParagraph.trim());
-        formattedLines.push(''); // Add blank line after paragraph
+      // Finalize paragraph if it's a natural break point
+      if (isEndOfSentence && (nextIsSpecial || currentParagraph.length > 300)) {
+        processedLines.push(currentParagraph.trim());
+        processedLines.push('');
         currentParagraph = '';
       }
     }
     
     // Add any remaining paragraph
     if (currentParagraph.trim()) {
-      formattedLines.push(currentParagraph.trim());
+      processedLines.push(currentParagraph.trim());
     }
     
-    // Clean up excessive blank lines
-    const result = formattedLines.join('\n').replace(/\n{3,}/g, '\n\n');
+    // Step 3: Clean up excessive blank lines
+    const result = processedLines.join('\n').replace(/\n{3,}/g, '\n\n').trim();
     
-    console.log('Formatted content structure:', result.substring(0, 500) + '...');
+    console.log('✅ Step 2: Processed all lines');
+    console.log('📄 Final formatted content length:', result.length);
+    console.log('🔍 Content preview:', result.substring(0, 400) + '...');
+    
+    // Step 4: Validate paragraph structure
+    const paragraphs = result.split('\n\n').filter(p => p.trim());
+    console.log('📋 Total paragraphs/sections:', paragraphs.length);
+    
     return result;
   }
 
