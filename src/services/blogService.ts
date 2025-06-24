@@ -1,3 +1,4 @@
+
 import { toast } from 'sonner';
 
 export interface BlogContent {
@@ -110,114 +111,75 @@ export class BlogService {
   }
 
   async generateBlogPost(headline: string, topic: string): Promise<string> {
-    console.log('🚀 Generating blog post with enhanced formatting...');
+    console.log('🚀 Generating well-structured blog post...');
     
     const content = await this.callGeminiAPI(
       `Write a comprehensive, engaging blog post with the headline "${headline}" about "${topic}".
 
-      CRITICAL FORMATTING FOR EMAIL RENDERING:
-      - Each paragraph MUST be separated by EXACTLY TWO newlines (\\n\\n)
-      - Write complete thoughts in each paragraph (3-5 sentences)
-      - Use natural paragraph breaks at logical points
-      - NO markdown headers (avoid # symbols) - use descriptive text instead
-      - Structure content with clear topic transitions
+      CRITICAL STRUCTURE REQUIREMENTS FOR EMAIL:
+      - Write EXACTLY 8-10 distinct paragraphs
+      - Each paragraph must be 3-5 complete sentences
+      - Separate each paragraph with exactly TWO newline characters (\\n\\n)
+      - NO markdown formatting (no #, *, _, \`, etc.)
+      - Write in plain text with natural paragraph breaks
+      - Each paragraph should focus on one main idea
       
-      CONTENT STRUCTURE (800-1000 words):
+      PARAGRAPH STRUCTURE (800-1000 words total):
       
-      Start with an engaging opening paragraph about ${topic}. Make this 4-5 sentences that hook the reader and introduce the main concept. This should create immediate interest and curiosity about the topic.
+      Paragraph 1: Hook - Start with an engaging opening about ${topic}. Write 4-5 sentences that immediately grab attention and introduce the main concept.
 
-      Write a second paragraph explaining why this topic matters right now. Include 3-4 sentences about current trends, relevance, and why people need this information today.
+      Paragraph 2: Problem - Explain the current challenge people face with ${topic}. Write 3-4 sentences describing why this is a real issue affecting many people.
 
-      Create a paragraph about the main problem people face with ${topic}. This should be 4-5 sentences describing the primary challenge, why it's difficult, and how it affects people's lives.
+      Paragraph 3: Why Now - Discuss why ${topic} is particularly relevant right now. Include 3-4 sentences about current trends and timing.
 
-      Write another paragraph covering the solution approach. Explain in 4-5 sentences what works, why it's effective, and how it differs from common approaches that don't work.
+      Paragraph 4: Solution Overview - Introduce the main approach or method. Write 4-5 sentences explaining what works and why it's different.
 
-      Add a paragraph with specific benefits and advantages. Use 3-4 sentences to highlight the key advantages, including any measurable results or improvements people can expect.
+      Paragraph 5: Key Benefits - Detail the specific advantages and results. Use 3-4 sentences to highlight measurable improvements people can expect.
 
-      Include a paragraph with actionable steps or practical advice. Write 4-5 sentences giving readers concrete things they can do to implement this information.
+      Paragraph 6: Step-by-Step - Provide actionable advice people can implement. Write 4-5 sentences with concrete steps or strategies.
 
-      Create a paragraph with examples, case studies, or real-world applications. Use 3-4 sentences to provide specific examples that illustrate the concepts in action.
+      Paragraph 7: Real Examples - Share specific examples or case studies. Use 3-4 sentences to illustrate the concepts with real-world applications.
 
-      Write a paragraph addressing common mistakes or pitfalls to avoid. Include 3-4 sentences about what not to do and why these mistakes happen.
+      Paragraph 8: Common Mistakes - Address what to avoid and why. Include 3-4 sentences about pitfalls and how to prevent them.
 
-      End with a strong closing paragraph that encourages action. Use 4-5 sentences to motivate readers, summarize key points, and create a call to action.
+      Paragraph 9: Call to Action - End with motivation and next steps. Write 4-5 sentences encouraging readers to take action.
 
-      FORMATTING REQUIREMENTS:
-      - Use the keyword "${topic}" naturally 6-8 times throughout  
-      - Each paragraph should be 3-5 complete sentences
-      - Separate ALL paragraphs with double newlines (\\n\\n)
-      - Write in conversational, engaging tone
-      - NO special formatting symbols or markdown
-      - Focus on readability and natural flow`
+      IMPORTANT FORMATTING RULES:
+      - Use the keyword "${topic}" naturally 6-8 times throughout
+      - Write conversational, engaging tone
+      - NO special symbols or formatting
+      - Each paragraph is a complete thought
+      - Separate paragraphs with \\n\\n ONLY`
     );
 
-    console.log('✅ Generated blog content, now formatting for email...');
-    return this.formatContentForEmail(content);
+    console.log('✅ Blog post generated, now cleaning for email compatibility...');
+    return this.cleanContentForEmail(content);
   }
 
-  private formatContentForEmail(content: string): string {
-    console.log('🔧 Formatting content specifically for email rendering...');
+  private cleanContentForEmail(content: string): string {
+    console.log('🔧 Cleaning content specifically for email rendering...');
     
-    // Step 1: Clean and normalize the content
-    let formatted = content
-      .replace(/\r\n/g, '\n')  // Normalize line endings
-      .replace(/\t/g, ' ')     // Replace tabs with spaces
-      .replace(/ +/g, ' ')     // Remove multiple spaces
+    // Step 1: Remove any markdown or formatting artifacts
+    let cleaned = content
+      .replace(/#{1,6}\s*/g, '') // Remove hash headers
+      .replace(/\*{1,3}(.*?)\*{1,3}/g, '$1') // Remove asterisk formatting
+      .replace(/`(.*?)`/g, '$1') // Remove backticks
+      .replace(/_{2,}(.*?)_{2,}/g, '$1') // Remove underscores
+      .replace(/\r\n/g, '\n') // Normalize line endings
+      .replace(/\t/g, ' ') // Replace tabs with spaces
       .trim();
 
-    // Step 2: Remove any markdown symbols that might interfere
-    formatted = formatted
-      .replace(/#{1,6}\s*/g, '')  // Remove hash headers
-      .replace(/\*{1,3}(.*?)\*{1,3}/g, '$1')  // Remove asterisk formatting
-      .replace(/`(.*?)`/g, '$1')  // Remove backticks
-      .replace(/_{2,}(.*?)_{2,}/g, '$1');  // Remove underscores
+    // Step 2: Ensure proper paragraph separation
+    const paragraphs = cleaned
+      .split(/\n\s*\n/) // Split on double newlines
+      .map(p => p.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim()) // Clean each paragraph
+      .filter(p => p.length > 10); // Remove very short paragraphs
 
-    // Step 3: Split into sentences and rebuild with proper paragraph structure
-    const sentences = formatted.split(/(?<=[.!?])\s+/).filter(s => s.trim());
-    const paragraphs: string[] = [];
-    let currentParagraph = '';
-    let sentenceCount = 0;
-
-    for (const sentence of sentences) {
-      const cleanSentence = sentence.trim();
-      if (!cleanSentence) continue;
-
-      if (currentParagraph) {
-        currentParagraph += ' ' + cleanSentence;
-      } else {
-        currentParagraph = cleanSentence;
-      }
-      
-      sentenceCount++;
-
-      // End paragraph after 3-5 sentences or at natural breaks
-      const shouldEndParagraph = 
-        sentenceCount >= 3 && (
-          sentenceCount >= 5 ||
-          cleanSentence.includes('Here\'s how') ||
-          cleanSentence.includes('The key is') ||
-          cleanSentence.includes('For example') ||
-          cleanSentence.includes('However,') ||
-          cleanSentence.includes('Additionally,') ||
-          cleanSentence.includes('In conclusion')
-        );
-
-      if (shouldEndParagraph) {
-        paragraphs.push(currentParagraph.trim());
-        currentParagraph = '';
-        sentenceCount = 0;
-      }
-    }
-
-    // Add any remaining content
-    if (currentParagraph.trim()) {
-      paragraphs.push(currentParagraph.trim());
-    }
-
+    // Step 3: Rejoin with consistent double newlines
     const result = paragraphs.join('\n\n');
     
-    console.log('✅ Content formatted for email');
-    console.log('📊 Created', paragraphs.length, 'paragraphs');
+    console.log('✅ Content cleaned for email');
+    console.log('📊 Paragraph count:', paragraphs.length);
     console.log('📄 Total length:', result.length, 'characters');
     
     return result;
