@@ -1,6 +1,5 @@
 
-
-// Enhanced markdown to HTML converter with comprehensive logging and better paragraph handling
+// Enhanced markdown to HTML converter with better paragraph handling
 export const markdownToHtml = (markdown: string): string => {
   console.log('🎨 Starting markdown to HTML conversion...');
   console.log('📝 Input markdown length:', markdown.length);
@@ -66,16 +65,16 @@ export const markdownToHtml = (markdown: string): string => {
   console.log(`✅ Converted ${linksBefore} links`);
   conversionSteps++;
 
-  // Step 7: Convert paragraphs (CRITICAL STEP)
-  console.log('🔧 Step 7: Converting paragraphs (CRITICAL)...');
+  // Step 7: Convert paragraphs - ENHANCED FOR BETTER EMAIL FORMATTING
+  console.log('🔧 Step 7: Converting paragraphs for email...');
   console.log('📄 Pre-paragraph content preview:', html.substring(0, 300));
   
   // Split content by double newlines to identify paragraph blocks
-  const blocks = html.split(/\n\s*\n/).filter(block => block.trim());
-  console.log('📋 Found', blocks.length, 'content blocks for paragraph processing');
+  const paragraphBlocks = html.split(/\n\s*\n/).filter(block => block.trim());
+  console.log('📋 Found', paragraphBlocks.length, 'paragraph blocks');
   
-  const processedBlocks = blocks.map((block, index) => {
-    const trimmedBlock = block.trim();
+  const processedBlocks = paragraphBlocks.map((block, index) => {
+    const trimmedBlock = block.trim().replace(/\n/g, ' ').replace(/\s+/g, ' ');
     
     // Don't wrap if it's already an HTML element
     if (trimmedBlock.startsWith('<') && (
@@ -90,21 +89,18 @@ export const markdownToHtml = (markdown: string): string => {
       return trimmedBlock;
     }
     
-    // Wrap regular text in paragraph tags
-    const paragraph = `<p style="margin: 20px 0; line-height: 1.7; text-align: justify; color: #374151; font-size: 16px;">${trimmedBlock}</p>`;
+    // Wrap regular text in paragraph tags with enhanced styling for email
+    const paragraph = `<p style="margin: 25px 0; line-height: 1.8; text-align: justify; color: #374151; font-size: 16px; font-weight: 400;">${trimmedBlock}</p>`;
     console.log(`📄 Block ${index + 1}: Created paragraph (${trimmedBlock.length} chars)`);
     return paragraph;
   });
   
   html = processedBlocks.join('\n\n');
-  console.log(`✅ Processed ${blocks.length} blocks into paragraphs`);
+  console.log(`✅ Processed ${paragraphBlocks.length} blocks into paragraphs`);
   conversionSteps++;
 
   // Final step: Clean up and validate
   console.log('🔧 Final step: Cleaning up HTML...');
-  
-  // Remove any remaining single newlines within HTML tags
-  html = html.replace(/>\s*\n\s*</g, '><');
   
   // Ensure proper spacing between elements
   html = html.replace(/(<\/[^>]+>)\s*(<[^>]+>)/g, '$1\n\n$2');

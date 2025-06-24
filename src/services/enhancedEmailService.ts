@@ -1,5 +1,3 @@
-
-
 import emailjs from '@emailjs/browser';
 import { markdownToHtml } from '@/lib/markdownUtils';
 import { toast } from 'sonner';
@@ -31,12 +29,12 @@ export class EnhancedEmailService {
     console.log('📧 Starting email formatting process...');
     console.log('📝 Input content length:', content.length);
     
-    // Step 1: Ensure proper content structure with enhanced preservation
-    const structuredContent = this.ensureProperContentStructure(content);
-    console.log('✅ Content structure preserved');
+    // Step 1: Clean and structure the content properly
+    const cleanedContent = this.cleanContentForEmail(content);
+    console.log('✅ Content cleaned for email');
     
-    // Step 2: Convert markdown to properly formatted HTML
-    const htmlContent = markdownToHtml(structuredContent);
+    // Step 2: Convert to HTML with proper paragraph structure
+    const htmlContent = markdownToHtml(cleanedContent);
     console.log('✅ Markdown converted to HTML');
     console.log('🔍 HTML preview:', htmlContent.substring(0, 500) + '...');
     
@@ -72,44 +70,65 @@ export class EnhancedEmailService {
 </div>`;
   }
 
-  private ensureProperContentStructure(content: string): string {
-    console.log('🔧 Processing content structure for email...');
+  private cleanContentForEmail(content: string): string {
+    console.log('🧹 Cleaning content for email formatting...');
     console.log('📊 Input length:', content.length);
     
-    // Step 1: Normalize line endings but preserve structure
-    let processedContent = content
-      .replace(/\r\n/g, '\n')  // Normalize to Unix line endings
-      .replace(/\n{4,}/g, '\n\n\n')  // Limit to max 3 consecutive newlines
+    // Step 1: Normalize line endings and remove excessive whitespace
+    let cleaned = content
+      .replace(/\r\n/g, '\n')
+      .replace(/\t/g, ' ')
+      .replace(/ +/g, ' ')
       .trim();
     
-    console.log('✅ Normalized line endings');
+    // Step 2: Split into meaningful paragraphs
+    const sentences = cleaned.split(/(?<=[.!?])\s+/);
+    const paragraphs: string[] = [];
+    let currentParagraph = '';
     
-    // Step 2: Ensure proper paragraph separation
-    // Split content into blocks (paragraphs, headers, lists, etc.)
-    const blocks = processedContent.split(/\n\s*\n/).filter(block => block.trim());
-    console.log('📋 Found', blocks.length, 'content blocks');
-    
-    const enhancedBlocks: string[] = [];
-    
-    for (let i = 0; i < blocks.length; i++) {
-      const block = blocks[i].trim();
-      if (!block) continue;
+    for (let i = 0; i < sentences.length; i++) {
+      const sentence = sentences[i].trim();
+      if (!sentence) continue;
       
-      // Clean up internal spacing within the block
-      const cleanedBlock = block
-        .replace(/\n+/g, ' ')  // Replace internal newlines with spaces
-        .replace(/\s+/g, ' ')  // Normalize multiple spaces
-        .trim();
+      // Add sentence to current paragraph
+      if (currentParagraph) {
+        currentParagraph += ' ' + sentence;
+      } else {
+        currentParagraph = sentence;
+      }
       
-      enhancedBlocks.push(cleanedBlock);
+      // Check if we should end this paragraph
+      const shouldEndParagraph = 
+        currentParagraph.length > 200 || // Long enough paragraph
+        sentence.includes('Here\'s') || // Start of new section
+        sentence.includes('The key') || // Important point
+        sentence.includes('Let me') || // Direct address
+        sentence.includes('Now,') || // Transition
+        sentence.includes('However,') || // Contrast
+        sentence.includes('Additionally,') || // Addition
+        sentence.includes('Furthermore,') || // Addition
+        sentence.includes('Moreover,') || // Addition
+        sentence.includes('In conclusion,') || // Conclusion
+        sentence.includes('To summarize,') || // Summary
+        i === sentences.length - 1; // Last sentence
+      
+      if (shouldEndParagraph) {
+        paragraphs.push(currentParagraph);
+        currentParagraph = '';
+      }
     }
     
-    // Step 3: Rejoin with proper double newlines
-    const result = enhancedBlocks.join('\n\n');
+    // Add any remaining content
+    if (currentParagraph.trim()) {
+      paragraphs.push(currentParagraph);
+    }
     
-    console.log('✅ Content structure enhanced');
+    const result = paragraphs.join('\n\n');
+    
+    console.log('✅ Content cleaned and structured');
+    console.log('📋 Created', paragraphs.length, 'paragraphs');
     console.log('📄 Output length:', result.length);
-    console.log('🔍 Structure preview:', result.substring(0, 400) + '...');
+    console.log('🔍 First paragraph preview:', paragraphs[0]?.substring(0, 150) + '...');
     
     return result;
   }
