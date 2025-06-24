@@ -1,3 +1,4 @@
+
 import emailjs from '@emailjs/browser';
 import { markdownToHtml } from '@/lib/markdownUtils';
 import { toast } from 'sonner';
@@ -26,109 +27,129 @@ export class EnhancedEmailService {
   }
 
   private formatForBlogger(content: string, headline: string, topic: string, imageUrl: string): string {
-    console.log('📧 Starting email formatting process...');
-    console.log('📝 Input content length:', content.length);
+    console.log('📧 Formatting email with enhanced structure...');
+    console.log('📝 Content length:', content.length);
     
-    // Step 1: Clean and structure the content properly
-    const cleanedContent = this.cleanContentForEmail(content);
-    console.log('✅ Content cleaned for email');
+    // Step 1: Ensure content is properly structured for email
+    const emailReadyContent = this.prepareContentForEmail(content);
+    console.log('✅ Content prepared for email structure');
     
-    // Step 2: Convert to HTML with proper paragraph structure
-    const htmlContent = markdownToHtml(cleanedContent);
-    console.log('✅ Markdown converted to HTML');
-    console.log('🔍 HTML preview:', htmlContent.substring(0, 500) + '...');
+    // Step 2: Convert to HTML with email-optimized styling
+    const htmlContent = markdownToHtml(emailReadyContent);
+    console.log('✅ HTML conversion completed for email');
     
     const secondImageUrl = `https://picsum.photos/600/300?random=${Date.now() + 1000}&sig=${encodeURIComponent(topic + '-secondary')}`;
     
+    // Step 3: Create email template with proper structure for email clients
     return `
-<div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.7; color: #2c3e50; max-width: 800px; margin: 0 auto; padding: 20px; background: #ffffff;">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${headline}</title>
+  <!--[if mso]>
+  <noscript>
+    <xml>
+      <o:OfficeDocumentSettings>
+        <o:PixelsPerInch>96</o:PixelsPerInch>
+      </o:OfficeDocumentSettings>
+    </xml>
+  </noscript>
+  <![endif]-->
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; line-height: 1.7; color: #2c3e50; background-color: #f7fafc;">
   
-  <div style="text-align: center; margin-bottom: 30px; padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px; color: white;">
-    <h1 style="font-size: 28px; font-weight: bold; margin: 0; line-height: 1.3;">${headline}</h1>
-    <div style="margin-top: 15px; display: flex; align-items: center; justify-content: center; gap: 15px; flex-wrap: wrap;">
-      <span style="background: rgba(255,255,255,0.2); padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px;">${topic}</span>
-      <span style="font-size: 14px; opacity: 0.9;">${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
-    </div>
-  </div>
+  <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin: 0; padding: 0;">
+    <tr>
+      <td align="center" style="padding: 20px 0;">
+        
+        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="600" style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1);">
+          
+          <!-- Header Section -->
+          <tr>
+            <td style="padding: 30px 40px; text-align: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px 12px 0 0;">
+              <h1 style="margin: 0 0 15px 0; font-size: 28px; font-weight: 700; color: #ffffff; line-height: 1.3;">${headline}</h1>
+              <div style="margin-top: 15px;">
+                <span style="background: rgba(255,255,255,0.25); padding: 8px 16px; border-radius: 20px; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #ffffff; margin-right: 15px;">${topic}</span>
+                <span style="font-size: 14px; color: rgba(255,255,255,0.9);">${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+              </div>
+            </td>
+          </tr>
+          
+          <!-- Featured Image -->
+          <tr>
+            <td style="padding: 0;">
+              <img src="${imageUrl}" alt="${headline}" style="width: 100%; max-width: 600px; height: 320px; object-fit: cover; display: block; border: 0;">
+            </td>
+          </tr>
+          
+          <!-- Content Section -->
+          <tr>
+            <td style="padding: 40px;">
+              <div style="font-size: 16px; line-height: 1.8; color: #374151;">
+                ${htmlContent}
+              </div>
+            </td>
+          </tr>
+          
+          <!-- Secondary Image -->
+          <tr>
+            <td style="padding: 0 40px 40px 40px; text-align: center;">
+              <img src="${secondImageUrl}" alt="Supporting visual for ${topic}" style="width: 100%; max-width: 520px; height: 260px; object-fit: cover; border-radius: 8px; display: block; border: 0; box-shadow: 0 4px 16px rgba(0,0,0,0.1);">
+            </td>
+          </tr>
+          
+          <!-- Call to Action -->
+          <tr>
+            <td style="padding: 0 40px 40px 40px;">
+              <div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); padding: 25px; border-radius: 12px; text-align: center;">
+                <p style="margin: 0; color: #ffffff; font-size: 16px; font-weight: 600; line-height: 1.5;">💡 Found this helpful? Share it with your friends and let us know what you think!</p>
+              </div>
+            </td>
+          </tr>
+          
+        </table>
+        
+      </td>
+    </tr>
+  </table>
   
-  <div style="text-align: center; margin-bottom: 30px;">
-    <img src="${imageUrl}" alt="${headline}" style="width: 100%; max-width: 800px; height: 400px; object-fit: cover; border-radius: 12px; box-shadow: 0 8px 32px rgba(0,0,0,0.1);">
-  </div>
-  
-  <div style="font-size: 16px; line-height: 1.8;">
-    ${htmlContent}
-  </div>
-  
-  <div style="text-align: center; margin: 40px 0;">
-    <img src="${secondImageUrl}" alt="Supporting visual for ${topic}" style="width: 100%; max-width: 600px; height: 300px; object-fit: cover; border-radius: 12px; box-shadow: 0 6px 24px rgba(0,0,0,0.1);">
-  </div>
-  
-  <div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); padding: 20px; border-radius: 12px; margin: 30px 0; text-align: center;">
-    <p style="color: white; font-size: 16px; font-weight: 500; margin: 0;">💡 Found this helpful? Share it with your friends and let us know what you think!</p>
-  </div>
-  
-</div>`;
+</body>
+</html>`;
   }
 
-  private cleanContentForEmail(content: string): string {
-    console.log('🧹 Cleaning content for email formatting...');
+  private prepareContentForEmail(content: string): string {
+    console.log('🧹 Preparing content structure for email rendering...');
     console.log('📊 Input length:', content.length);
     
-    // Step 1: Normalize line endings and remove excessive whitespace
-    let cleaned = content
+    // Normalize and clean the content
+    let prepared = content
       .replace(/\r\n/g, '\n')
       .replace(/\t/g, ' ')
       .replace(/ +/g, ' ')
       .trim();
+
+    // Ensure proper paragraph separation for email rendering
+    const paragraphs = prepared.split('\n\n').filter(p => p.trim());
     
-    // Step 2: Split into meaningful paragraphs
-    const sentences = cleaned.split(/(?<=[.!?])\s+/);
-    const paragraphs: string[] = [];
-    let currentParagraph = '';
-    
-    for (let i = 0; i < sentences.length; i++) {
-      const sentence = sentences[i].trim();
-      if (!sentence) continue;
+    // Validate each paragraph has proper structure
+    const validatedParagraphs = paragraphs.map(paragraph => {
+      const cleaned = paragraph.trim().replace(/\n/g, ' ').replace(/\s+/g, ' ');
       
-      // Add sentence to current paragraph
-      if (currentParagraph) {
-        currentParagraph += ' ' + sentence;
-      } else {
-        currentParagraph = sentence;
+      // Ensure minimum paragraph length for readability
+      if (cleaned.length < 50) {
+        console.log('⚠️ Short paragraph detected, may need combination');
       }
       
-      // Check if we should end this paragraph
-      const shouldEndParagraph = 
-        currentParagraph.length > 200 || // Long enough paragraph
-        sentence.includes('Here\'s') || // Start of new section
-        sentence.includes('The key') || // Important point
-        sentence.includes('Let me') || // Direct address
-        sentence.includes('Now,') || // Transition
-        sentence.includes('However,') || // Contrast
-        sentence.includes('Additionally,') || // Addition
-        sentence.includes('Furthermore,') || // Addition
-        sentence.includes('Moreover,') || // Addition
-        sentence.includes('In conclusion,') || // Conclusion
-        sentence.includes('To summarize,') || // Summary
-        i === sentences.length - 1; // Last sentence
-      
-      if (shouldEndParagraph) {
-        paragraphs.push(currentParagraph);
-        currentParagraph = '';
-      }
-    }
+      return cleaned;
+    });
+
+    const result = validatedParagraphs.join('\n\n');
     
-    // Add any remaining content
-    if (currentParagraph.trim()) {
-      paragraphs.push(currentParagraph);
-    }
-    
-    const result = paragraphs.join('\n\n');
-    
-    console.log('✅ Content cleaned and structured');
-    console.log('📋 Created', paragraphs.length, 'paragraphs');
+    console.log('✅ Content prepared for email');
+    console.log('📋 Paragraphs created:', validatedParagraphs.length);
     console.log('📄 Output length:', result.length);
-    console.log('🔍 First paragraph preview:', paragraphs[0]?.substring(0, 150) + '...');
     
     return result;
   }
@@ -141,8 +162,8 @@ export class EnhancedEmailService {
     try {
       emailjs.init(this.emailConfig.emailjsPublicKey);
 
-      console.log('🚀 Starting email send process...');
-      console.log('📧 Formatting content for email delivery...');
+      console.log('🚀 Starting enhanced email send process...');
+      console.log('📧 Creating email-optimized format...');
       
       const bloggerFormattedContent = this.formatForBlogger(
         blogData.content, 
@@ -151,7 +172,7 @@ export class EnhancedEmailService {
         blogData.imageUrl
       );
 
-      console.log('✅ Email content formatted successfully');
+      console.log('✅ Email format created successfully');
       console.log('📤 Preparing to send email...');
 
       const templateParams = {
@@ -171,8 +192,8 @@ export class EnhancedEmailService {
       );
 
       if (response.status === 200) {
-        console.log('✅ Email sent successfully!');
-        toast.success(`Blog post "${blogData.headline}" sent via email with enhanced formatting!`);
+        console.log('✅ Email sent successfully with enhanced formatting!');
+        toast.success(`Blog post "${blogData.headline}" sent via email with proper paragraph formatting!`);
         return true;
       } else {
         throw new Error(`EmailJS returned status: ${response.status}`);

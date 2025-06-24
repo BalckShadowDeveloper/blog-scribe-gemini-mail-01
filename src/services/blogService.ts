@@ -1,4 +1,3 @@
-
 import { toast } from 'sonner';
 
 export interface BlogContent {
@@ -111,189 +110,115 @@ export class BlogService {
   }
 
   async generateBlogPost(headline: string, topic: string): Promise<string> {
+    console.log('🚀 Generating blog post with enhanced formatting...');
+    
     const content = await this.callGeminiAPI(
       `Write a comprehensive, engaging blog post with the headline "${headline}" about "${topic}".
 
-      CRITICAL FORMATTING REQUIREMENTS:
-      - Write each paragraph as a complete block of text on its own line
-      - Separate each paragraph with EXACTLY ONE blank line
-      - Each paragraph should be 3-5 sentences long
-      - Never break sentences across multiple lines within a paragraph
+      CRITICAL FORMATTING FOR EMAIL RENDERING:
+      - Each paragraph MUST be separated by EXACTLY TWO newlines (\\n\\n)
+      - Write complete thoughts in each paragraph (3-5 sentences)
+      - Use natural paragraph breaks at logical points
+      - NO markdown headers (avoid # symbols) - use descriptive text instead
+      - Structure content with clear topic transitions
       
-      STRUCTURE (800-1000 words):
+      CONTENT STRUCTURE (800-1000 words):
       
-      # ${headline}
-      
-      Write an engaging opening paragraph that hooks the reader about ${topic}. This should be a complete paragraph that introduces the topic and creates curiosity. Make this paragraph 4-5 sentences long and write it as one continuous block of text.
-      
-      ## Why This Matters Now
-      
-      Write a full paragraph explaining why this topic is relevant and important right now. Include specific reasons and current trends. Make this 3-4 sentences as one block.
-      
-      ## The Problem Most People Don't Know About
-      
-      Write a comprehensive paragraph covering the main challenges people face with ${topic}. Focus on the primary issue that most people encounter. Write this as 4-5 sentences in one block.
-      
-      Write another paragraph covering additional challenges and obstacles. This should be 3-4 sentences discussing secondary problems people face.
-      
-      Write a third paragraph explaining why these problems persist and what makes them difficult to solve. Keep this 3-4 sentences in one block.
-      
-      ## The Solution That Actually Works
-      
-      Write a comprehensive paragraph introducing the solution and explaining why it's effective. This should be 4-5 sentences that build excitement about the approach.
-      
-      ### Key Benefits
-      
-      Write an introductory paragraph about the benefits before listing them. This should be 2-3 sentences.
-      
-      - Benefit 1: Specific advantage with detailed explanation in 1-2 sentences
-      - Benefit 2: Another clear benefit with examples in 1-2 sentences
-      - Benefit 3: Third important benefit with proof in 1-2 sentences
-      
-      ### How to Get Started
-      
-      Write an introductory paragraph before the steps. This should be 3-4 sentences explaining the process.
-      
-      1. **Step 1**: Clear action step with detailed instructions (2-3 sentences)
-      2. **Step 2**: Next specific step with examples (2-3 sentences)
-      3. **Step 3**: Final implementation step with tips (2-3 sentences)
-      
-      ## Real Examples and Results
-      
-      Write a paragraph introducing the examples section. This should be 3-4 sentences explaining why examples are important.
-      
-      Write another paragraph providing specific examples and case studies. Include detailed examples and statistics to support your points. Make this 4-5 sentences.
-      
-      > "Include a compelling quote or testimonial here to add credibility and social proof. Make this 1-2 sentences that sound authentic."
-      
-      Write a final paragraph in this section summarizing the results and their significance. This should be 3-4 sentences.
-      
-      ## Common Mistakes to Avoid
-      
-      Write an introduction paragraph about why avoiding mistakes is important. This should be 3-4 sentences.
-      
-      - **Mistake 1**: What not to do and why, with detailed explanation (2-3 sentences)
-      - **Mistake 2**: Another pitfall to avoid with examples (2-3 sentences)
-      - **Mistake 3**: Third common error with solutions (2-3 sentences)
-      
-      ## Take Action Today
-      
-      End with a compelling closing paragraph that encourages immediate action and summarizes the key points. This should be 4-5 sentences that motivate the reader to start.
-      
-      FINAL FORMATTING CHECK:
-      - Each paragraph should be written as one continuous block of text
-      - Separate each paragraph with exactly one blank line
-      - Never break sentences within a paragraph
-      - Use the keyword "${topic}" naturally 6-8 times throughout
-      - Ensure each paragraph flows naturally into the next`
+      Start with an engaging opening paragraph about ${topic}. Make this 4-5 sentences that hook the reader and introduce the main concept. This should create immediate interest and curiosity about the topic.
+
+      Write a second paragraph explaining why this topic matters right now. Include 3-4 sentences about current trends, relevance, and why people need this information today.
+
+      Create a paragraph about the main problem people face with ${topic}. This should be 4-5 sentences describing the primary challenge, why it's difficult, and how it affects people's lives.
+
+      Write another paragraph covering the solution approach. Explain in 4-5 sentences what works, why it's effective, and how it differs from common approaches that don't work.
+
+      Add a paragraph with specific benefits and advantages. Use 3-4 sentences to highlight the key advantages, including any measurable results or improvements people can expect.
+
+      Include a paragraph with actionable steps or practical advice. Write 4-5 sentences giving readers concrete things they can do to implement this information.
+
+      Create a paragraph with examples, case studies, or real-world applications. Use 3-4 sentences to provide specific examples that illustrate the concepts in action.
+
+      Write a paragraph addressing common mistakes or pitfalls to avoid. Include 3-4 sentences about what not to do and why these mistakes happen.
+
+      End with a strong closing paragraph that encourages action. Use 4-5 sentences to motivate readers, summarize key points, and create a call to action.
+
+      FORMATTING REQUIREMENTS:
+      - Use the keyword "${topic}" naturally 6-8 times throughout  
+      - Each paragraph should be 3-5 complete sentences
+      - Separate ALL paragraphs with double newlines (\\n\\n)
+      - Write in conversational, engaging tone
+      - NO special formatting symbols or markdown
+      - Focus on readability and natural flow`
     );
 
-    return this.ensureProperParagraphFormatting(content);
+    console.log('✅ Generated blog content, now formatting for email...');
+    return this.formatContentForEmail(content);
   }
 
-  private ensureProperParagraphFormatting(content: string): string {
-    console.log('🔧 Starting paragraph formatting process...');
-    console.log('📝 Original content length:', content.length);
+  private formatContentForEmail(content: string): string {
+    console.log('🔧 Formatting content specifically for email rendering...');
     
-    // Step 1: Normalize line endings and clean up
-    let cleanedContent = content
-      .replace(/\r\n/g, '\n')
-      .replace(/\t/g, ' ')
-      .replace(/ +/g, ' ');
-    
-    console.log('✅ Step 1: Normalized line endings');
-    
-    // Step 2: Split into lines for processing
-    const lines = cleanedContent.split('\n');
-    const processedLines: string[] = [];
+    // Step 1: Clean and normalize the content
+    let formatted = content
+      .replace(/\r\n/g, '\n')  // Normalize line endings
+      .replace(/\t/g, ' ')     // Replace tabs with spaces
+      .replace(/ +/g, ' ')     // Remove multiple spaces
+      .trim();
+
+    // Step 2: Remove any markdown symbols that might interfere
+    formatted = formatted
+      .replace(/#{1,6}\s*/g, '')  // Remove hash headers
+      .replace(/\*{1,3}(.*?)\*{1,3}/g, '$1')  // Remove asterisk formatting
+      .replace(/`(.*?)`/g, '$1')  // Remove backticks
+      .replace(/_{2,}(.*?)_{2,}/g, '$1');  // Remove underscores
+
+    // Step 3: Split into sentences and rebuild with proper paragraph structure
+    const sentences = formatted.split(/(?<=[.!?])\s+/).filter(s => s.trim());
+    const paragraphs: string[] = [];
     let currentParagraph = '';
-    let insideCodeBlock = false;
-    
-    console.log('📊 Processing', lines.length, 'lines');
-    
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i].trim();
-      
-      // Handle code blocks
-      if (line.startsWith('```')) {
-        insideCodeBlock = !insideCodeBlock;
-        if (currentParagraph.trim()) {
-          processedLines.push(currentParagraph.trim());
-          processedLines.push('');
-          currentParagraph = '';
-        }
-        processedLines.push(line);
-        processedLines.push('');
-        continue;
-      }
-      
-      if (insideCodeBlock) {
-        processedLines.push(line);
-        continue;
-      }
-      
-      // Skip empty lines
-      if (!line) {
-        continue;
-      }
-      
-      // Handle special elements (headers, lists, blockquotes)
-      if (line.startsWith('#') || 
-          line.startsWith('-') || 
-          line.startsWith('*') || 
-          line.match(/^\d+\./) || 
-          line.startsWith('>')) {
-        
-        // Finalize current paragraph if exists
-        if (currentParagraph.trim()) {
-          processedLines.push(currentParagraph.trim());
-          processedLines.push('');
-          currentParagraph = '';
-        }
-        
-        // Add special element
-        processedLines.push(line);
-        processedLines.push('');
-        continue;
-      }
-      
-      // Regular text - add to current paragraph
+    let sentenceCount = 0;
+
+    for (const sentence of sentences) {
+      const cleanSentence = sentence.trim();
+      if (!cleanSentence) continue;
+
       if (currentParagraph) {
-        currentParagraph += ' ' + line;
+        currentParagraph += ' ' + cleanSentence;
       } else {
-        currentParagraph = line;
+        currentParagraph = cleanSentence;
       }
       
-      // Check if we should finalize this paragraph
-      const isEndOfSentence = line.endsWith('.') || line.endsWith('!') || line.endsWith('?') || line.endsWith('"');
-      const nextLine = i + 1 < lines.length ? lines[i + 1].trim() : '';
-      const nextIsSpecial = nextLine.startsWith('#') || nextLine.startsWith('-') || 
-                           nextLine.startsWith('*') || nextLine.match(/^\d+\./) || 
-                           nextLine.startsWith('>') || !nextLine;
-      
-      // Finalize paragraph if it's a natural break point
-      if (isEndOfSentence && (nextIsSpecial || currentParagraph.length > 300)) {
-        processedLines.push(currentParagraph.trim());
-        processedLines.push('');
+      sentenceCount++;
+
+      // End paragraph after 3-5 sentences or at natural breaks
+      const shouldEndParagraph = 
+        sentenceCount >= 3 && (
+          sentenceCount >= 5 ||
+          cleanSentence.includes('Here\'s how') ||
+          cleanSentence.includes('The key is') ||
+          cleanSentence.includes('For example') ||
+          cleanSentence.includes('However,') ||
+          cleanSentence.includes('Additionally,') ||
+          cleanSentence.includes('In conclusion')
+        );
+
+      if (shouldEndParagraph) {
+        paragraphs.push(currentParagraph.trim());
         currentParagraph = '';
+        sentenceCount = 0;
       }
     }
-    
-    // Add any remaining paragraph
+
+    // Add any remaining content
     if (currentParagraph.trim()) {
-      processedLines.push(currentParagraph.trim());
+      paragraphs.push(currentParagraph.trim());
     }
+
+    const result = paragraphs.join('\n\n');
     
-    // Step 3: Clean up excessive blank lines
-    const result = processedLines.join('\n').replace(/\n{3,}/g, '\n\n').trim();
-    
-    console.log('✅ Step 2: Processed all lines');
-    console.log('📄 Final formatted content length:', result.length);
-    console.log('🔍 Content preview:', result.substring(0, 400) + '...');
-    
-    // Step 4: Validate paragraph structure
-    const paragraphs = result.split('\n\n').filter(p => p.trim());
-    console.log('📋 Total paragraphs/sections:', paragraphs.length);
+    console.log('✅ Content formatted for email');
+    console.log('📊 Created', paragraphs.length, 'paragraphs');
+    console.log('📄 Total length:', result.length, 'characters');
     
     return result;
   }
