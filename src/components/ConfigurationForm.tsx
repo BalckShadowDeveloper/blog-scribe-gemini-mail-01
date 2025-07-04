@@ -2,36 +2,39 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Sparkles } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Sparkles, Facebook } from 'lucide-react';
 
 interface ConfigurationFormProps {
   geminiApiKey: string;
   setGeminiApiKey: (key: string) => void;
-  emailConfig: {
-    recipientEmail: string;
-    senderEmail: string;
-    senderPassword: string;
-    emailjsServiceId: string;
-    emailjsTemplateId: string;
-    emailjsPublicKey: string;
+  facebookConfig: {
+    pageId: string;
+    accessToken: string;
+    appId: string;
+    appSecret: string;
   };
-  setEmailConfig: (config: any) => void;
+  setFacebookConfig: (config: any) => void;
   isAutomated: boolean;
+  onTestConnection?: () => void;
+  testingConnection?: boolean;
 }
 
 const ConfigurationForm: React.FC<ConfigurationFormProps> = ({
   geminiApiKey,
   setGeminiApiKey,
-  emailConfig,
-  setEmailConfig,
-  isAutomated
+  facebookConfig,
+  setFacebookConfig,
+  isAutomated,
+  onTestConnection,
+  testingConnection = false
 }) => {
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Sparkles className="h-6 w-6 text-purple-500" />
-          Configuration
+          <Facebook className="h-6 w-6 text-blue-500" />
+          Facebook Configuration
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -50,45 +53,57 @@ const ConfigurationForm: React.FC<ConfigurationFormProps> = ({
         </div>
         
         <div className="space-y-3">
-          <label className="block text-sm font-medium">Email Configuration</label>
+          <label className="block text-sm font-medium">Facebook Page Configuration</label>
           <Input
-            placeholder="Recipient email"
-            value={emailConfig.recipientEmail}
-            onChange={(e) => setEmailConfig({...emailConfig, recipientEmail: e.target.value})}
+            placeholder="Facebook Page ID"
+            value={facebookConfig.pageId}
+            onChange={(e) => setFacebookConfig({...facebookConfig, pageId: e.target.value})}
             disabled={isAutomated}
           />
           <Input
-            placeholder="Your sender email (for display)"
-            value={emailConfig.senderEmail}
-            onChange={(e) => setEmailConfig({...emailConfig, senderEmail: e.target.value})}
-            disabled={isAutomated}
-          />
-        </div>
-
-        <div className="space-y-3">
-          <label className="block text-sm font-medium">EmailJS Configuration</label>
-          <Input
-            placeholder="EmailJS Service ID"
-            value={emailConfig.emailjsServiceId}
-            onChange={(e) => setEmailConfig({...emailConfig, emailjsServiceId: e.target.value})}
-            disabled={isAutomated}
-          />
-          <Input
-            placeholder="EmailJS Template ID"
-            value={emailConfig.emailjsTemplateId}
-            onChange={(e) => setEmailConfig({...emailConfig, emailjsTemplateId: e.target.value})}
-            disabled={isAutomated}
-          />
-          <Input
-            placeholder="EmailJS Public Key"
-            value={emailConfig.emailjsPublicKey}
-            onChange={(e) => setEmailConfig({...emailConfig, emailjsPublicKey: e.target.value})}
+            type="password"
+            placeholder="Page Access Token"
+            value={facebookConfig.accessToken}
+            onChange={(e) => setFacebookConfig({...facebookConfig, accessToken: e.target.value})}
             disabled={isAutomated}
           />
           <p className="text-xs text-gray-500">
-            Get these from your <a href="https://www.emailjs.com/" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">EmailJS dashboard</a>
+            Get your Page Access Token from <a href="https://developers.facebook.com/tools/explorer/" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">Facebook Graph API Explorer</a>
           </p>
         </div>
+
+        <div className="space-y-3">
+          <label className="block text-sm font-medium">Optional: App Configuration</label>
+          <Input
+            placeholder="Facebook App ID (optional)"
+            value={facebookConfig.appId}
+            onChange={(e) => setFacebookConfig({...facebookConfig, appId: e.target.value})}
+            disabled={isAutomated}
+          />
+          <Input
+            type="password"
+            placeholder="Facebook App Secret (optional)"
+            value={facebookConfig.appSecret}
+            onChange={(e) => setFacebookConfig({...facebookConfig, appSecret: e.target.value})}
+            disabled={isAutomated}
+          />
+          <p className="text-xs text-gray-500">
+            Create a Facebook App at <a href="https://developers.facebook.com/apps/" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">Facebook for Developers</a>
+          </p>
+        </div>
+
+        {onTestConnection && (
+          <div className="pt-2">
+            <Button
+              onClick={onTestConnection}
+              disabled={isAutomated || testingConnection || !facebookConfig.pageId || !facebookConfig.accessToken}
+              variant="outline"
+              className="w-full"
+            >
+              {testingConnection ? 'Testing...' : 'Test Facebook Connection'}
+            </Button>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
